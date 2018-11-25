@@ -1,0 +1,23 @@
+#######################################
+# Syntax Coloring Map For Esp8266MQTTClient
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Esp8266MQTTClient	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+loop	KEYWORD2
+isConnected	KEYWORD2
+publish	KEYWORD2
+subscribe	KEYWORD2
+executeDelayed	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
