@@ -3,13 +3,13 @@
 void onConnectionEstablished();
 
 Esp8266MQTTClient client(
-  "ssid",          // Wifi ssid
-  "pass",   // Wifi password
+  "ssid",           // Wifi ssid
+  "pass",           // Wifi password
   "192.168.1.101",  // MQTT broker ip
   1883,             // MQTT broker port
-  "usr",    // MQTT username
-  "mqttpass",      // MQTT password
-  "test1",      // Client name
+  "usr",            // MQTT username
+  "mqttpass",       // MQTT password
+  "test1",          // Client name
   onConnectionEstablished, // Connection established callback
   true,             // Enable web updater
   true              // Enable debug messages
@@ -17,7 +17,7 @@ Esp8266MQTTClient client(
 
 void setup()
 {
-	Serial.begin(115200);
+  Serial.begin(115200);
 }
 
 void onConnectionEstablished()
@@ -36,5 +36,5 @@ void onConnectionEstablished()
 
 void loop()
 {
-	client.loop();
+  client.loop();
 }
