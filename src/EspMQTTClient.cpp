@@ -1,9 +1,9 @@
-#include "Esp8266MQTTClient.h"
+#include "EspMQTTClient.h"
 
 
 // =============== Constructor / destructor ===================
 
-Esp8266MQTTClient::Esp8266MQTTClient(const String &wifiSsid, const String &wifiPassword, const String &mqttServerIp,
+EspMQTTClient::EspMQTTClient(const String &wifiSsid, const String &wifiPassword, const String &mqttServerIp,
 	const short mqttServerPort, const String &mqttUsername, const String &mqttPassword,
 	const String &mqttClientName, std::function<void()> connectionEstablishedCallback, bool enableWebUpdater, bool enableSerialLogs)
 {
@@ -41,12 +41,12 @@ Esp8266MQTTClient::Esp8266MQTTClient(const String &wifiSsid, const String &wifiP
 	mMqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
 }
 
-Esp8266MQTTClient::~Esp8266MQTTClient() {}
+EspMQTTClient::~EspMQTTClient() {}
 
 
 // =============== Public functions =================
 
-void Esp8266MQTTClient::loop()
+void EspMQTTClient::loop()
 {
 	long currentMillis = millis();
 	
@@ -134,12 +134,12 @@ void Esp8266MQTTClient::loop()
 	}
 }
 
-bool Esp8266MQTTClient::isConnected()
+bool EspMQTTClient::isConnected()
 {
 	return mWifiConnected && mMqttConnected;
 }
 
-void Esp8266MQTTClient::publish(const String &topic, const String &payload, bool retain)
+void EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
 	mMqttClient->publish(topic.c_str(), payload.c_str(), retain);
   
@@ -147,7 +147,7 @@ void Esp8266MQTTClient::publish(const String &topic, const String &payload, bool
 		Serial.printf("MQTT - Message sent [%s] %s \n", topic.c_str(), payload.c_str());
 }
 
-void Esp8266MQTTClient::subscribe(const String &topic, std::function<void(const String&)> messageReceivedCallback)
+void EspMQTTClient::subscribe(const String &topic, std::function<void(const String&)> messageReceivedCallback)
 {
 	mMqttClient->subscribe(topic.c_str());
 
@@ -160,10 +160,10 @@ void Esp8266MQTTClient::subscribe(const String &topic, std::function<void(const 
 		mCallbackListSize++;
 	}
 	else if(mEnableSerialLogs)
-		Serial.println("ERROR - Esp8266MQTTClient::subscribe - Max callback size reached.");
+		Serial.println("ERROR - EspMQTTClient::subscribe - Max callback size reached.");
 }
 
-void Esp8266MQTTClient::executeDelayed(const long delay, std::function<void()> toExecute)
+void EspMQTTClient::executeDelayed(const long delay, std::function<void()> toExecute)
 {
 	if(mToExecuteListSize < max_to_execute_list_size)
 	{
@@ -181,7 +181,7 @@ void Esp8266MQTTClient::executeDelayed(const long delay, std::function<void()> t
 // ================== Private functions ====================-
 
 
-void Esp8266MQTTClient::connectToWifi()
+void EspMQTTClient::connectToWifi()
 {
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(mWifiSsid.c_str(), mWifiPassword.c_str());
@@ -192,7 +192,7 @@ void Esp8266MQTTClient::connectToWifi()
 	mLastWifiConnectionMillis = millis();
 }
 
-void Esp8266MQTTClient::connectToMqttBroker()
+void EspMQTTClient::connectToMqttBroker()
 {
 	if(mEnableSerialLogs)
 		Serial.printf("\nConnecting to MQTT broker at %s ", mMqttServerIp.c_str());
@@ -247,7 +247,7 @@ void Esp8266MQTTClient::connectToMqttBroker()
 	mLastMqttConnectionMillis = millis();
 }
 
-void Esp8266MQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length)
+void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length)
 {
 	if(mEnableSerialLogs)
 		Serial.printf("MQTT - Message received [%s] ", topic);

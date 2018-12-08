@@ -10,7 +10,7 @@ You just need to provide your credentials and it will manage these things :
 - Provide a callback handling to advise when we are connected to the MQTT broker.
 - Allow to print usefull debug informations.
 
-Was tested with a Wemos D1 mini, feel free to test it with another ESP8266 and provide feedback.
+Was tested with a Wemos D1 mini, feel free to test it with another ESP'S and provide feedback.
 
 
 ## Dependency

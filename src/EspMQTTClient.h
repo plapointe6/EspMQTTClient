@@ -6,7 +6,7 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
 
-class Esp8266MQTTClient
+class EspMQTTClient
 {
 private:
 	static const byte max_callback_list_size = 10;
@@ -55,10 +55,10 @@ private:
 	byte mToExecuteListSize = 0;
 
 public:
-	Esp8266MQTTClient(const String &wifiSsid, const String &wifiPassword, const String &mqttServerIp, 
+	EspMQTTClient(const String &wifiSsid, const String &wifiPassword, const String &mqttServerIp, 
 		const short mqttServerPort, const String &mqttUsername, const String &mqttPassword, 
 		const String &mqttClientName, std::function<void()> connectionEstablishedCallback, bool enableWebUpdater = true, bool enableSerialLogs = true);
-	~Esp8266MQTTClient();
+	~EspMQTTClient();
 
 	void loop();
 	bool isConnected();

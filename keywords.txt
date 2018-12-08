@@ -1,12 +1,12 @@
 #######################################
-# Syntax Coloring Map For Esp8266MQTTClient
+# Syntax Coloring Map For EspMQTTClient
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-Esp8266MQTTClient	KEYWORD1
+EspMQTTClient	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

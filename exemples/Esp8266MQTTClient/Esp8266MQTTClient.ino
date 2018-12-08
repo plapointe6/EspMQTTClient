@@ -1,8 +1,8 @@
-#include "Esp8266MQTTClient.h"
+#include "EspMQTTClient.h"
 
 void onConnectionEstablished();
 
-Esp8266MQTTClient client(
+EspMQTTClient client(
   "ssid",           // Wifi ssid
   "pass",           // Wifi password
   "192.168.1.101",  // MQTT broker ip
