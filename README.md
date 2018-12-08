@@ -29,7 +29,7 @@ The MQTT communication depends on the PubSubClient Library (https://github.com/k
 See "Esp8266MQTTClient.ino" for the complete exemple
 
 ```c++
-Esp8266MQTTClient client(...);
+EspMQTTClient client(...);
 
 void onConnectionEstablished(){
 
