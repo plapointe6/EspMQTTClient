@@ -66,6 +66,12 @@ public:
 	void publish(const String &topic, const String &payload, bool retain = false);
 	void subscribe(const String &topic, std::function<void(const String&)> messageReceivedCallback);
 	
+	/**Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+    *
+    * @param topic topic to be removed.
+    */
+	void unsubscribe(const String &topic);
+	
 	void executeDelayed(const long delay, std::function<void()> toExecute);
 
 private:

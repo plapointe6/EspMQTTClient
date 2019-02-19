@@ -163,6 +163,38 @@ void EspMQTTClient::subscribe(const String &topic, std::function<void(const Stri
 		Serial.println("ERROR - EspMQTTClient::subscribe - Max callback size reached.");
 }
 
+void EspMQTTClient::unsubscribe(const String &topic) {
+
+    bool found = false;
+
+    for (int i = 0; i < mCallbackListSize; i++) {
+        if (!found) {
+            if (mCallbackList[i].topic.equals(topic)) {
+                found = true;
+                mMqttClient->unsubscribe(topic.c_str());
+                if (mEnableSerialLogs)
+                    Serial.printf("MQTT - unsubscribed to %s \n", topic.c_str());
+
+            }
+        }
+
+        if (found) {
+            if ((i + 1) < max_callback_list_size)
+                mCallbackList[i] = mCallbackList[i + 1];
+        }
+    }
+
+
+    if (found) {
+        mCallbackListSize--;
+
+    } else if (mEnableSerialLogs) {
+        Serial.println("ERROR - EspMQTTClient::unsubscribe - topic not found.");
+    }
+
+
+}
+
 void EspMQTTClient::executeDelayed(const long delay, std::function<void()> toExecute)
 {
 	if(mToExecuteListSize < max_to_execute_list_size)
