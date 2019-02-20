@@ -10,8 +10,6 @@ You just need to provide your credentials and it will manage these things :
 - Provide a callback handling to advise when we are connected to the MQTT broker.
 - Allow to print usefull debug informations.
 
-Was tested with a Wemos D1 mini, feel free to test it with another ESP'S and provide feedback.
-
 
 ## Dependency
 
@@ -19,10 +17,11 @@ The MQTT communication depends on the PubSubClient Library (https://github.com/k
 
 ## Functions
 
-- publish(String topic, String message) : publish a message to the provided MQTT topic
-- subscribe(String topic, callback) : subscribe to the specified topic and call the provided callback passing the received message.
+- publish(topic, message) : publish a message to the provided MQTT topic
+- subscribe(topic, callback) : subscribe to the specified topic and call the provided callback passing the received message.
+- unsubscribe(topic) : unsubscribe from the specified topic.
 - bool isConnected() : Return true if everything is connected.
-- executeDelayed(long milliseconds, callback) : As ESP8366 does not like to be interrupted too long with the delay function, this function will allow a delayed execution of a function whitout interruption the sketch.
+- executeDelayed(milliseconds, callback) : As ESP8366 does not like to be interrupted too long with the delay function, this function will allow a delayed execution of a function whitout interrupting the sketch.
 
 ## Exemple
 

@@ -16,6 +16,7 @@ loop	KEYWORD2
 isConnected	KEYWORD2
 publish	KEYWORD2
 subscribe	KEYWORD2
+unsubscribe	KEYWORD2
 executeDelayed	KEYWORD2
 
 #######################################
