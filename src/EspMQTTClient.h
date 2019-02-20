@@ -20,9 +20,10 @@ class EspMQTTClient
 {
 private:
   bool mWifiConnected;
-  long mLastWifiConnectionMillis;
+  unsigned long mLastWifiConnectionAttemptMillis;
+  unsigned long mLastWifiConnectionSuccessMillis;
   bool mMqttConnected;
-  long mLastMqttConnectionMillis;
+  unsigned long mLastMqttConnectionMillis;
 	
   const char* mWifiSsid;
   const char* mWifiPassword;

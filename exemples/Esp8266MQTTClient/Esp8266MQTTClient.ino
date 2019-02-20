@@ -22,13 +22,15 @@ void setup()
 
 void onConnectionEstablished()
 {
-  client.subscribe("mytopic/test", [] (const String &payload)
-  {
+  // Subscribe to "mytopic/test" and display received message to Serial
+  client.subscribe("mytopic/test", [](const String &payload) {
     Serial.println(payload);
   });
-  
+
+  // Publish a message to "mytopic/test"
   client.publish("mytopic/test", "This is a message");
 
+  // Execute delayed instructions
   client.executeDelayed(5 * 1000, []() {
     client.publish("mytopic/test", "This is a message sent 5 seconds later");
   });
