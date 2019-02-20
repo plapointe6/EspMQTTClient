@@ -7,6 +7,11 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
 
+#define MAX_TOPIC_SUBSCRIPTION_LIST_SIZE 10
+#define MAX_DELAYED_EXECUTION_LIST_SIZE 10
+#define MAX_MQTT_PAYLOAD_SIZE 256 // Maximum payload size, must correspond to MQTT_MAX_PACKET_SIZE of PubSubClient.h
+#define CONNECTION_RETRY_DELAY 10 * 1000
+
 typedef void(*ConnectionEstablishedCallback) ();
 typedef void(*MessageReceivedCallback) (const String &message);
 typedef void(*DelayedExecutionCallback) ();
@@ -14,29 +19,24 @@ typedef void(*DelayedExecutionCallback) ();
 class EspMQTTClient
 {
 private:
-  static const byte max_callback_list_size = 10;
-  static const byte max_to_execute_list_size = 10;
-  static const int max_mqtt_payload_size = 256;
-  static const int connection_retry_delay = 10 * 1000;
-
   bool mWifiConnected;
   long mLastWifiConnectionMillis;
   bool mMqttConnected;
   long mLastMqttConnectionMillis;
 	
-  String mWifiSsid;
-  String mWifiPassword;
+  const char* mWifiSsid;
+  const char* mWifiPassword;
 
-  String mMqttServerIp;
-  short mMqttServerPort;
-  String mMqttUsername;
-  String mMqttPassword;
-  String mMqttClientName;
+  const char* mMqttServerIp;
+  const short mMqttServerPort;
+  const char* mMqttUsername;
+  const char* mMqttPassword;
+  const char* mMqttClientName;
 
   ConnectionEstablishedCallback mConnectionEstablishedCallback;
 
-  bool mEnableWebUpdater;
-  bool mEnableSerialLogs;
+  const bool mEnableWebUpdater;
+  const bool mEnableSerialLogs;
  
   ESP8266WebServer* mHttpServer;
   ESP8266HTTPUpdateServer* mHttpUpdater;
@@ -44,37 +44,40 @@ private:
   WiFiClient* mWifiClient;
   PubSubClient* mMqttClient;
 
-  struct CallbackRecord {
-	  String topic;
+  struct TopicSubscription {
+    const char* topic;
     MessageReceivedCallback callback;
   };
-  CallbackRecord mCallbackList[max_callback_list_size];
-  byte mCallbackListSize;
+  TopicSubscription mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
+  byte mTopicSubscriptionListSize;
 	
   struct DelayedExecutionRecord {
-	  unsigned long targetMillis;
-    DelayedExecutionCallback toExecute;
+    unsigned long targetMillis;
+    DelayedExecutionCallback callback;
   };
-  DelayedExecutionRecord mToExecuteList[max_to_execute_list_size];
-  byte mToExecuteListSize = 0;
+  DelayedExecutionRecord mDelayedExecutionList[MAX_DELAYED_EXECUTION_LIST_SIZE];
+  byte mDelayedExecutionListSize = 0;
 
 public:
-  EspMQTTClient(const String &wifiSsid, const String &wifiPassword, const String &mqttServerIp, 
-    const short mqttServerPort, const String &mqttUsername, const String &mqttPassword, 
-	  const String &mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback, 
-    bool enableWebUpdater = true, bool enableSerialLogs = true);
+  EspMQTTClient(const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
+    const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
+    const char* mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback,
+    const bool enableWebUpdater = true, const bool enableSerialLogs = true);
   ~EspMQTTClient();
 
   void loop();
   bool isConnected() const;
 
+  void publish(const char topic[], const char payload[], bool retain = false);
   void publish(const String &topic, const String &payload, bool retain = false);
+  void subscribe(const char topic[], MessageReceivedCallback messageReceivedCallback);
   void subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
 	
   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+  void unsubscribe(const char topic[]);
   void unsubscribe(const String &topic);
 	
-  void executeDelayed(const long delay, DelayedExecutionCallback toExecute);
+  void executeDelayed(const long delay, DelayedExecutionCallback callback);
 
 private:
   void connectToWifi();

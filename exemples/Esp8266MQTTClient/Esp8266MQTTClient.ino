@@ -3,16 +3,16 @@
 void onConnectionEstablished();
 
 EspMQTTClient client(
-  "ssid",           // Wifi ssid
-  "pass",           // Wifi password
-  "192.168.1.101",  // MQTT broker ip
-  1883,             // MQTT broker port
-  "usr",            // MQTT username
-  "mqttpass",       // MQTT password
-  "test1",          // Client name
+  "ssid",             // Wifi ssid
+  "pass",             // Wifi password
+  "192.168.1.101",    // MQTT broker ip
+  1883,               // MQTT broker port
+  "usr",              // MQTT username
+  "mqttpass",         // MQTT password
+  "test1",            // Client name
   onConnectionEstablished, // Connection established callback
-  true,             // Enable web updater
-  true              // Enable debug messages
+  true,               // Enable web updater
+  true                // Enable debug messages
 );
 
 void setup()
