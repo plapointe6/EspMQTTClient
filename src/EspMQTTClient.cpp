@@ -130,25 +130,20 @@ bool EspMQTTClient::isConnected() const
   return mWifiConnected && mMqttConnected;
 }
 
-void EspMQTTClient::publish(const char topic[], const char payload[], bool retain)
-{
-  mMqttClient->publish(topic, payload, retain);
-
-  if (mEnableSerialLogs)
-    Serial.printf("MQTT - Message sent [%s] %s \n", topic, payload);
-}
-
 void EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
-  publish(topic.c_str(), payload.c_str(), retain);
-}
-
-void EspMQTTClient::subscribe(const char topic[], MessageReceivedCallback messageReceivedCallback)
-{
-  mMqttClient->subscribe(topic);
+  mMqttClient->publish(topic.c_str(), payload.c_str(), retain);
 
   if (mEnableSerialLogs)
-    Serial.printf("MQTT - subscribed to %s \n", topic);
+    Serial.printf("MQTT - Message sent [%s] %s \n", topic.c_str(), payload.c_str());
+}
+
+void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
+{
+  mMqttClient->subscribe(topic.c_str());
+
+  if (mEnableSerialLogs)
+    Serial.printf("MQTT - subscribed to %s \n", topic.c_str());
 
   if (mTopicSubscriptionListSize < MAX_TOPIC_SUBSCRIPTION_LIST_SIZE)
   {
@@ -159,44 +154,34 @@ void EspMQTTClient::subscribe(const char topic[], MessageReceivedCallback messag
     Serial.println("ERROR - EspMQTTClient::subscribe - Max callback size reached.");
 }
 
-void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
-{
-  subscribe(topic.c_str(), messageReceivedCallback);
-}
-
-void EspMQTTClient::unsubscribe(const char topic[])
+void EspMQTTClient::unsubscribe(const String &topic)
 {
   bool found = false;
 
-  for (int i = 0; i < mTopicSubscriptionListSize; i++) 
+  for (int i = 0; i < mTopicSubscriptionListSize; i++)
   {
-    if (!found) 
+    if (!found)
     {
-      if (strcmp(mTopicSubscriptionList[i].topic, topic) == 0) 
+      if (mTopicSubscriptionList[i].topic.equals(topic))
       {
         found = true;
-        mMqttClient->unsubscribe(topic);
+        mMqttClient->unsubscribe(topic.c_str());
         if (mEnableSerialLogs)
-          Serial.printf("MQTT - unsubscribed to %s \n", topic);
+          Serial.printf("MQTT - unsubscribed to %s \n", topic.c_str());
       }
     }
 
-    if (found) 
+    if (found)
     {
       if ((i + 1) < MAX_TOPIC_SUBSCRIPTION_LIST_SIZE)
         mTopicSubscriptionList[i] = mTopicSubscriptionList[i + 1];
     }
   }
 
-  if (found) 
+  if (found)
     mTopicSubscriptionListSize--;
   else if (mEnableSerialLogs)
     Serial.println("ERROR - EspMQTTClient::unsubscribe - topic not found.");
-}
-
-void EspMQTTClient::unsubscribe(const String &topic)
-{
-  unsubscribe(topic.c_str());
 }
 
 void EspMQTTClient::executeDelayed(const long delay, DelayedExecutionCallback callback)
@@ -300,7 +285,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   // Send the message to subscribers
   for (int i = 0 ; i < mTopicSubscriptionListSize ; i++)
   {
-    if (strcmp(mTopicSubscriptionList[i].topic, topic) == 0)
+    if (mTopicSubscriptionList[i].topic.equals(topic))
       (*mTopicSubscriptionList[i].callback)(payloadStr); // Call the callback
   }
 }

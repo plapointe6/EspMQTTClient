@@ -46,7 +46,7 @@ private:
   PubSubClient* mMqttClient;
 
   struct TopicSubscription {
-    const char* topic;
+    String topic;
     MessageReceivedCallback callback;
   };
   TopicSubscription mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
@@ -69,13 +69,10 @@ public:
   void loop();
   bool isConnected() const;
 
-  void publish(const char topic[], const char payload[], bool retain = false);
   void publish(const String &topic, const String &payload, bool retain = false);
-  void subscribe(const char topic[], MessageReceivedCallback messageReceivedCallback);
   void subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
 	
   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
-  void unsubscribe(const char topic[]);
   void unsubscribe(const String &topic);
 	
   void executeDelayed(const long delay, DelayedExecutionCallback callback);
