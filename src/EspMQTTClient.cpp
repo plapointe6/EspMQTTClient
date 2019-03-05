@@ -3,9 +3,10 @@
 
 // =============== Constructor / destructor ===================
 
-EspMQTTClient::EspMQTTClient(const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
-  const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
-  const char* mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback,
+EspMQTTClient::EspMQTTClient(
+  const char wifiSsid[], const char* wifiPassword,
+  ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort,
+  const char* mqttUsername, const char* mqttPassword, const char* mqttClientName,
   const bool enableWebUpdater, const bool enableSerialLogs)
   : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
     mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
