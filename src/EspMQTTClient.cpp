@@ -140,18 +140,30 @@ void EspMQTTClient::publish(const String &topic, const String &payload, bool ret
 
 void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
-  mMqttClient->subscribe(topic.c_str());
+  // Check the possibility to add a new topic
+  if (mTopicSubscriptionListSize >= MAX_TOPIC_SUBSCRIPTION_LIST_SIZE) {
+    if (mEnableSerialLogs)
+      Serial.println("WARNING - EspMQTTClient::subscribe - Max callback size reached.");
+    return;
+  }
 
+  // Check the duplicate of the subscription to the topic
+  bool found = false;
+  for (int i = 0; i < mTopicSubscriptionListSize && !found; i++) {
+    found = mTopicSubscriptionList[i].topic.equals(topic);
+  }
+  if (found) {
+    if (mEnableSerialLogs)
+      Serial.println("WARNING - EspMQTTClient::subscribe - Subscribed already.");
+    return;
+  }
+
+  // All checks are passed - do the job
+  mMqttClient->subscribe(topic.c_str());
+  mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback };
+  
   if (mEnableSerialLogs)
     Serial.printf("MQTT - subscribed to %s \n", topic.c_str());
-
-  if (mTopicSubscriptionListSize < MAX_TOPIC_SUBSCRIPTION_LIST_SIZE)
-  {
-    mTopicSubscriptionList[mTopicSubscriptionListSize] = { topic, messageReceivedCallback };
-    mTopicSubscriptionListSize++;
-  }
-  else if (mEnableSerialLogs)
-    Serial.println("ERROR - EspMQTTClient::subscribe - Max callback size reached.");
 }
 
 void EspMQTTClient::unsubscribe(const String &topic)
