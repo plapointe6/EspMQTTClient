@@ -16,8 +16,7 @@ typedef void(*ConnectionEstablishedCallback) ();
 typedef void(*MessageReceivedCallback) (const String &message);
 typedef void(*DelayedExecutionCallback) ();
 
-class EspMQTTClient
-{
+class EspMQTTClient {
 private:
   bool mWifiConnected;
   unsigned long mLastWifiConnectionAttemptMillis;
@@ -60,9 +59,10 @@ private:
   byte mDelayedExecutionListSize = 0;
 
 public:
-  EspMQTTClient(const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
-    const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
-    const char* mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback,
+  EspMQTTClient(
+    const char wifiSsid[], const char* wifiPassword,
+    ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort = 1883,
+    const char* mqttUsername = "", const char* mqttPassword = "", const char* mqttClientName = "ESP8266",
     const bool enableWebUpdater = true, const bool enableSerialLogs = true);
   ~EspMQTTClient();
 
