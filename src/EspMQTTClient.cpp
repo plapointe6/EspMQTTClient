@@ -48,7 +48,7 @@ void EspMQTTClient::loop()
     if(!mWifiConnected)
     {
       if(mEnableSerialLogs)
-        Serial.printf("\nWifi connected, ip : %s \n", WiFi.localIP().toString().c_str());
+        Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
 
       mLastWifiConnectionSuccessMillis = millis();
       
@@ -61,7 +61,9 @@ void EspMQTTClient::loop()
         MDNS.addService("http", "tcp", 80);
       
         if(mEnableSerialLogs)
-          Serial.printf("Web updater ready, Open http://%s.local in your browser and login with username '%s' and password '%s'\n", mMqttClientName, mMqttUsername, mMqttPassword);
+          Serial.printf(
+			"WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n",
+			mMqttClientName, mMqttUsername, mMqttPassword);
       }
   
       mWifiConnected = true;
@@ -77,7 +79,7 @@ void EspMQTTClient::loop()
       if(mMqttConnected)
       {
         if(mEnableSerialLogs)
-          Serial.println("Lost MQTT connection.");
+          Serial.println("MQTT! Lost connection.");
         
         mTopicSubscriptionListSize = 0;
         
@@ -97,7 +99,7 @@ void EspMQTTClient::loop()
     if(mWifiConnected) 
     {
       if(mEnableSerialLogs)
-        Serial.println("Lost wifi connection.");
+        Serial.println("WiFi! Lost connection.");
       
       mWifiConnected = false;
       WiFi.disconnect();
@@ -136,7 +138,7 @@ void EspMQTTClient::publish(const String &topic, const String &payload, bool ret
   mMqttClient->publish(topic.c_str(), payload.c_str(), retain);
 
   if (mEnableSerialLogs)
-    Serial.printf("MQTT - Message sent [%s] %s \n", topic.c_str(), payload.c_str());
+    Serial.printf("MQTT << [%s] %s.\n", topic.c_str(), payload.c_str());
 }
 
 void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
@@ -144,7 +146,7 @@ void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   // Check the possibility to add a new topic
   if (mTopicSubscriptionListSize >= MAX_TOPIC_SUBSCRIPTION_LIST_SIZE) {
     if (mEnableSerialLogs)
-      Serial.println("WARNING - EspMQTTClient::subscribe - Max callback size reached.");
+      Serial.println("MQTT! Subscription list is full, ignored.");
     return;
   }
 
@@ -155,7 +157,7 @@ void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   }
   if (found) {
     if (mEnableSerialLogs)
-      Serial.println("WARNING - EspMQTTClient::subscribe - Subscribed already.");
+      Serial.printf("MQTT! Subscribed to [%s] already, ignored.\n", topic.c_str());
     return;
   }
 
@@ -164,7 +166,7 @@ void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback };
   
   if (mEnableSerialLogs)
-    Serial.printf("MQTT - subscribed to %s \n", topic.c_str());
+    Serial.printf("MQTT: Subscribed to [%s]\n", topic.c_str());
 }
 
 void EspMQTTClient::unsubscribe(const String &topic)
@@ -180,7 +182,7 @@ void EspMQTTClient::unsubscribe(const String &topic)
         found = true;
         mMqttClient->unsubscribe(topic.c_str());
         if (mEnableSerialLogs)
-          Serial.printf("MQTT - unsubscribed to %s \n", topic.c_str());
+          Serial.printf("MQTT: Unsubscribed from %s.\n", topic.c_str());
       }
     }
 
@@ -194,7 +196,7 @@ void EspMQTTClient::unsubscribe(const String &topic)
   if (found)
     mTopicSubscriptionListSize--;
   else if (mEnableSerialLogs)
-    Serial.println("ERROR - EspMQTTClient::unsubscribe - topic not found.");
+    Serial.println("MQTT! Topic cannot be found to unsubscribe, ignored.");
 }
 
 void EspMQTTClient::executeDelayed(const long delay, DelayedExecutionCallback callback)
@@ -209,7 +211,7 @@ void EspMQTTClient::executeDelayed(const long delay, DelayedExecutionCallback ca
     mDelayedExecutionListSize++;
   }
   else if(mEnableSerialLogs)
-    Serial.printf("\nError, MAX_DELAYED_EXECUTION_LIST_SIZE reached");
+    Serial.printf("SYS! The list of delayed functions is full.\n");
 }
 
 
@@ -221,7 +223,7 @@ void EspMQTTClient::connectToWifi()
   WiFi.begin(mWifiSsid, mWifiPassword);
 
   if(mEnableSerialLogs)
-    Serial.printf("\nConnecting to %s ", mWifiSsid);
+    Serial.printf("WiFi: Connecting to %s ... ", mWifiSsid);
   
   mLastWifiConnectionAttemptMillis = millis();
 }
@@ -229,14 +231,14 @@ void EspMQTTClient::connectToWifi()
 void EspMQTTClient::connectToMqttBroker()
 {
   if(mEnableSerialLogs)
-    Serial.printf("\nConnecting to MQTT broker at %s ", mMqttServerIp);
+    Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
 
   if (mMqttClient->connect(mMqttClientName, mMqttUsername, mMqttPassword))
   {
     mMqttConnected = true;
     
     if(mEnableSerialLogs) 
-      Serial.print("ok \n");
+      Serial.println("ok.");
 
     (*mConnectionEstablishedCallback)();
   }
@@ -247,31 +249,31 @@ void EspMQTTClient::connectToMqttBroker()
     switch (mMqttClient->state())
     {
       case -4:
-        Serial.print("MQTT_CONNECTION_TIMEOUT");
+        Serial.println("MQTT_CONNECTION_TIMEOUT");
         break;
       case -3:
-        Serial.print("MQTT_CONNECTION_LOST");
+        Serial.println("MQTT_CONNECTION_LOST");
         break;
       case -2:
-        Serial.print("MQTT_CONNECT_FAILED");
+        Serial.println("MQTT_CONNECT_FAILED");
         break;
       case -1:
-        Serial.print("MQTT_DISCONNECTED");
+        Serial.println("MQTT_DISCONNECTED");
         break;
       case 1:
-        Serial.print("MQTT_CONNECT_BAD_PROTOCOL");
+        Serial.println("MQTT_CONNECT_BAD_PROTOCOL");
         break;
       case 2:
-        Serial.print("MQTT_CONNECT_BAD_CLIENT_ID");
+        Serial.println("MQTT_CONNECT_BAD_CLIENT_ID");
         break;
       case 3:
-        Serial.print("MQTT_CONNECT_UNAVAILABLE");
+        Serial.println("MQTT_CONNECT_UNAVAILABLE");
         break;
       case 4:
-        Serial.print("MQTT_CONNECT_BAD_CREDENTIALS");
+        Serial.println("MQTT_CONNECT_BAD_CREDENTIALS");
         break;
       case 5:
-        Serial.print("MQTT_CONNECT_UNAUTHORIZED");
+        Serial.println("MQTT_CONNECT_UNAUTHORIZED");
         break;
     }
   }
@@ -293,7 +295,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   String payloadStr = buffer;
 
   if(mEnableSerialLogs)
-    Serial.printf("MQTT - Message received [%s] %s \n", topic, payloadStr.c_str());
+    Serial.printf("MQTT >> [%s] %s.\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
   for (int i = 0 ; i < mTopicSubscriptionListSize ; i++)
