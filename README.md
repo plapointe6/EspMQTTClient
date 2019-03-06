@@ -1,15 +1,15 @@
 # MQTT and Wifi handling for ESP8266
 
-This library is intended to encapsulate the handling of wifi and MQTT connections of an ESP8266.
-You just need to provide your credentials and it will manage these things : 
-- Connecting to a wifi network
-- Connecting to a MQTT broker
+This library is intended to encapsulate the handling of WiFi and MQTT connections of an ESP8266.
+You just need to provide your credentials and it will manage the following things: 
+- Connecting to a WiFi network.
+- Connecting to a MQTT broker.
+- Automatically detecting connection lost either from the WiFi client of MQTT broker.
+- Automatically attempting to reconnect when the either WiFi or MQTT connection is lost.
+- Subscrubing/unsubscrubing to/from MQTT topics.
+- Provide a callback handling to advise when we are connected to the MQTT broker or a subscribed MQTT topic received a message.
 - Running an HTTP server secured by a password to allow remote update.
-- Automatically detects connection lost either from the wifi client of MQTT broker.
-- Automatically attempt to reconnect when the connection is lost.
-- Provide a callback handling to advise when we are connected to the MQTT broker.
-- Allow to print usefull debug informations.
-
+- Printing usefull debug informations, switch the possibility off whenever debug is no longer needed.
 
 ## Dependency
 
@@ -23,14 +23,12 @@ The MQTT communication depends on the PubSubClient Library (https://github.com/k
 - bool isConnected() : Return true if everything is connected.
 - executeDelayed(milliseconds, callback) : As ESP8366 does not like to be interrupted too long with the delay function, this function will allow a delayed execution of a function whitout interrupting the sketch.
 
-## Exemple
-
-See "Esp8266MQTTClient.ino" for the complete exemple
+## Example
 
 ```c++
 EspMQTTClient client(...);
 
-void onConnectionEstablished(){
+void onConnectionEstablished() {
 
   client.subscribe("mytopic/test", [] (const String &payload)  {
     Serial.println(payload);
@@ -40,3 +38,5 @@ void onConnectionEstablished(){
 }
 
 ```
+
+See "Esp8266MQTTClient.ino" for the complete example.
