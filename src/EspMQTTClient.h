@@ -65,6 +65,14 @@ public:
     ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort = 1883,
     const char* mqttUsername = "", const char* mqttPassword = "", const char* mqttClientName = "ESP8266",
     const bool enableWebUpdater = true, const bool enableSerialLogs = true);
+
+  // Legacy constructor
+  EspMQTTClient(
+    const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
+    const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
+    const char* mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback,
+    const bool enableWebUpdater = true, const bool enableSerialLogs = true);
+
   ~EspMQTTClient();
 
   void loop();
@@ -79,6 +87,7 @@ public:
   void executeDelayed(const long delay, DelayedExecutionCallback callback);
 
 private:
+  void initialize();
   void connectToWifi();
   void connectToMqttBroker();
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);

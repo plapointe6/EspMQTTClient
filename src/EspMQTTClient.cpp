@@ -3,6 +3,21 @@
 
 // =============== Constructor / destructor ===================
 
+// Legacy constructor - will be deleted soon or later
+EspMQTTClient::EspMQTTClient(
+  const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
+  const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
+  const char* mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback,
+  const bool enableWebUpdater, const bool enableSerialLogs)
+  : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
+  mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
+  mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback),
+  mEnableWebUpdater(enableWebUpdater), mEnableSerialLogs(enableSerialLogs)
+{
+  initialize();
+}
+
+// Preferred constructor (new form)
 EspMQTTClient::EspMQTTClient(
   const char wifiSsid[], const char* wifiPassword,
   ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort,
@@ -12,6 +27,11 @@ EspMQTTClient::EspMQTTClient(
     mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
     mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback),
     mEnableWebUpdater(enableWebUpdater), mEnableSerialLogs(enableSerialLogs)
+{
+  initialize();
+}
+
+void EspMQTTClient::initialize()
 {
   mTopicSubscriptionListSize = 0;
 
