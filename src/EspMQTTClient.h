@@ -16,7 +16,8 @@ typedef void(*ConnectionEstablishedCallback) ();
 typedef void(*MessageReceivedCallback) (const String &message);
 typedef void(*DelayedExecutionCallback) ();
 
-class EspMQTTClient {
+class EspMQTTClient 
+{
 private:
   bool mWifiConnected;
   unsigned long mLastWifiConnectionAttemptMillis;
