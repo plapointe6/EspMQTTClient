@@ -11,10 +11,6 @@
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
 #define CONNECTION_RETRY_DELAY 10 * 1000
 
-// MQTT_MAX_PACKET_SIZE is defined in PubSubClient.h (default at 128 bytes)
-// If you want to augment the 128 byte maximum, you must change MQTT_MAX_PACKET_SIZE from PubSubClient.h
-#define MAX_MQTT_PAYLOAD_SIZE MQTT_MAX_PACKET_SIZE 
-
 typedef void(*ConnectionEstablishedCallback) ();
 typedef void(*MessageReceivedCallback) (const String &message);
 typedef void(*DelayedExecutionCallback) ();

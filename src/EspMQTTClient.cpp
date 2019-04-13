@@ -154,7 +154,7 @@ void EspMQTTClient::publish(const String &topic, const String &payload, bool ret
   mMqttClient->publish(topic.c_str(), payload.c_str(), retain);
 
   if (mEnableSerialLogs)
-    Serial.printf("MQTT << [%s] %s.\n", topic.c_str(), payload.c_str());
+    Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
 }
 
 void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
@@ -200,7 +200,7 @@ void EspMQTTClient::unsubscribe(const String &topic)
         found = true;
         mMqttClient->unsubscribe(topic.c_str());
         if (mEnableSerialLogs)
-          Serial.printf("MQTT: Unsubscribed from %s.\n", topic.c_str());
+          Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
       }
     }
 
@@ -301,19 +301,27 @@ void EspMQTTClient::connectToMqttBroker()
 
 void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length)
 {
-  // Convert payload to String
-  char buffer[MAX_MQTT_PAYLOAD_SIZE];
+  // Convert the payload into a String
+  // First, We ensure that we dont bypass the maximum size of the PubSubClient library buffer that originated the payload
+  // This buffer has a maximum length of MQTT_MAX_PACKET_SIZE and the payload begin at "headerSize + topicLength + 1"
+  unsigned int strTerminationPos;
+  if (strlen(topic) + length + 9 >= MQTT_MAX_PACKET_SIZE)
+  {
+    strTerminationPos = length - 1;
 
-  if (length >= MAX_MQTT_PAYLOAD_SIZE)
-    length = MAX_MQTT_PAYLOAD_SIZE - 1;
+    if (mEnableSerialLogs)
+      Serial.print("MQTT! Your message may be truncated, please change MQTT_MAX_PACKET_SIZE of PubSubClient.h to a higher value.\n");
+  }
+  else
+    strTerminationPos = length;
 
-  strncpy(buffer, (char*)payload, length);
-  buffer[length] = '\0';
+  // Second, we add the string termination code at the end of the payload and we convert it to a String object
+  payload[strTerminationPos] = '\0';
+  String payloadStr((char*)payload);
 
-  String payloadStr = buffer;
-
+  // Logging
   if (mEnableSerialLogs)
-    Serial.printf("MQTT >> [%s] %s.\n", topic, payloadStr.c_str());
+    Serial.printf("MQTT >> [%s] %s\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
   for (int i = 0 ; i < mTopicSubscriptionListSize ; i++)
