@@ -51,13 +51,15 @@ EspMQTTClient::EspMQTTClient(
   const bool enableWebUpdater, const bool enableSerialLogs)
   : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
   mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
-  mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback), 
-  mEnableSerialLogs(enableSerialLogs)
+  mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback)
 {
   initialize();
 
   if (enableWebUpdater)
     enableHTTPWebUpdater();
+
+  if (enableSerialLogs)
+    enableDebuggingMessages();
 }
 
 EspMQTTClient::EspMQTTClient(
@@ -67,13 +69,15 @@ EspMQTTClient::EspMQTTClient(
   const bool enableWebUpdater, const bool enableSerialLogs)
   : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
     mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
-    mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback), 
-  mEnableSerialLogs(enableSerialLogs)
+    mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback)
 {
   initialize();
 
   if (enableWebUpdater)
     enableHTTPWebUpdater();
+
+  if (enableSerialLogs)
+    enableDebuggingMessages();
 }
 
 EspMQTTClient::~EspMQTTClient() {}
@@ -104,6 +108,9 @@ void EspMQTTClient::initialize()
   mUpdateServerAddress = NULL;
   mHttpServer = NULL;
   mHttpUpdater = NULL;
+
+  // other
+  mEnableSerialLogs = false;
 }
 
 // =============== Configuration functions, most of them must be called before the first loop() call ==============
