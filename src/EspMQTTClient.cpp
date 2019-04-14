@@ -41,18 +41,18 @@ void EspMQTTClient::initialize()
   mLastWifiConnectionSuccessMillis = 0;
   mWifiClient = new WiFiClient();
 
+  // MQTT client
+  mMqttConnected = false;
+  mLastMqttConnectionMillis = 0;
+  mMqttClient = new PubSubClient(mMqttServerIp, mMqttServerPort, *mWifiClient);
+  mMqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
+
   // Web updater
   if (mEnableWebUpdater)
   {
     mHttpServer = new ESP8266WebServer(80);
     mHttpUpdater = new ESP8266HTTPUpdateServer();
   }
-
-  // MQTT client
-  mMqttConnected = false;
-  mLastMqttConnectionMillis = 0;
-  mMqttClient = new PubSubClient(mMqttServerIp, mMqttServerPort, *mWifiClient);
-  mMqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
 }
 
 EspMQTTClient::~EspMQTTClient() {}

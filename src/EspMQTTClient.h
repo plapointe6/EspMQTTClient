@@ -18,45 +18,49 @@ typedef void(*DelayedExecutionCallback) ();
 class EspMQTTClient 
 {
 private:
+  // Wifi related
   bool mWifiConnected;
   unsigned long mLastWifiConnectionAttemptMillis;
   unsigned long mLastWifiConnectionSuccessMillis;
-  bool mMqttConnected;
-  unsigned long mLastMqttConnectionMillis;
-	
   const char* mWifiSsid;
   const char* mWifiPassword;
+  WiFiClient* mWifiClient;
 
+  // MQTT related
+  bool mMqttConnected;
+  unsigned long mLastMqttConnectionMillis;
   const char* mMqttServerIp;
   const short mMqttServerPort;
   const char* mMqttUsername;
   const char* mMqttPassword;
   const char* mMqttClientName;
 
-  ConnectionEstablishedCallback mConnectionEstablishedCallback;
-
-  const bool mEnableWebUpdater;
-  const bool mEnableSerialLogs;
- 
-  ESP8266WebServer* mHttpServer;
-  ESP8266HTTPUpdateServer* mHttpUpdater;
-
-  WiFiClient* mWifiClient;
   PubSubClient* mMqttClient;
 
-  struct TopicSubscription {
+  struct TopicSubscriptionRecord {
     String topic;
     MessageReceivedCallback callback;
   };
-  TopicSubscription mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
+  TopicSubscriptionRecord mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
   byte mTopicSubscriptionListSize;
-	
+
+  // HTTP update server related
+  const bool mEnableWebUpdater;
+  ESP8266WebServer* mHttpServer;
+  ESP8266HTTPUpdateServer* mHttpUpdater;
+
+  // Delayed execution related
   struct DelayedExecutionRecord {
     unsigned long targetMillis;
     DelayedExecutionCallback callback;
   };
   DelayedExecutionRecord mDelayedExecutionList[MAX_DELAYED_EXECUTION_LIST_SIZE];
   byte mDelayedExecutionListSize = 0;
+
+  // General behaviour related
+  ConnectionEstablishedCallback mConnectionEstablishedCallback;
+  const bool mEnableSerialLogs;
+
 
 public:
   EspMQTTClient(
@@ -79,10 +83,8 @@ public:
 
   void publish(const String &topic, const String &payload, bool retain = false);
   void subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
-	
-  //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
-  void unsubscribe(const String &topic);
-	
+  void unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+  
   void executeDelayed(const long delay, DelayedExecutionCallback callback);
 
 private:
