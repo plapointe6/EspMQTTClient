@@ -44,6 +44,9 @@ void EspMQTTClient::initialize()
   // MQTT client
   mMqttConnected = false;
   mLastMqttConnectionMillis = 0;
+  mMqttLastWillTopic = 0;
+  mMqttLastWillMessage = 0;
+  mMqttLastWillRetain = false;
   mMqttClient = new PubSubClient(mMqttServerIp, mMqttServerPort, *mWifiClient);
   mMqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
 
@@ -56,6 +59,16 @@ void EspMQTTClient::initialize()
 }
 
 EspMQTTClient::~EspMQTTClient() {}
+
+
+// =============== Configuration functions, must be called before the first loop() call ==============
+
+void EspMQTTClient::setLastWillMessage(const char* topic, const char* message, const bool retain)
+{
+  mMqttLastWillTopic = (char*)topic;
+  mMqttLastWillMessage = (char*)message;
+  mMqttLastWillRetain = retain;
+}
 
 
 // =============== Public functions =================
@@ -251,7 +264,7 @@ void EspMQTTClient::connectToMqttBroker()
   if (mEnableSerialLogs)
     Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
 
-  if (mMqttClient->connect(mMqttClientName, mMqttUsername, mMqttPassword))
+  if (mMqttClient->connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, true))
   {
     mMqttConnected = true;
     

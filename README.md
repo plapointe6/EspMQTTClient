@@ -17,6 +17,7 @@ The MQTT communication depends on the PubSubClient Library (https://github.com/k
 
 ## Functions
 
+- setLastWillMessage(topic, message, retain) : Allow to set last will message, must be done in function setup() of you sketch.
 - publish(topic, message) : publish a message to the provided MQTT topic
 - subscribe(topic, callback) : subscribe to the specified topic and call the provided callback passing the received message.
 - unsubscribe(topic) : unsubscribe from the specified topic.

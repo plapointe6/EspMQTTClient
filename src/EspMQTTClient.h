@@ -35,6 +35,10 @@ private:
   const char* mMqttPassword;
   const char* mMqttClientName;
 
+  char* mMqttLastWillTopic;
+  char* mMqttLastWillMessage;
+  bool mMqttLastWillRetain;
+
   PubSubClient* mMqttClient;
 
   struct TopicSubscriptionRecord {
@@ -77,6 +81,8 @@ public:
     const bool enableWebUpdater = true, const bool enableSerialLogs = true);
 
   ~EspMQTTClient();
+
+  void setLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
 
   void loop();
   bool isConnected() const;
