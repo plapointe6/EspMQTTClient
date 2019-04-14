@@ -11,7 +11,9 @@
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
 #define CONNECTION_RETRY_DELAY 10 * 1000
 
-typedef void(*ConnectionEstablishedCallback) ();
+void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
+typedef void(*ConnectionEstablishedCallback) (); // For legacy constructor support (allow to specify a user defined function instead of onConnectionEstablished())
+
 typedef void(*MessageReceivedCallback) (const String &message);
 typedef void(*DelayedExecutionCallback) ();
 
@@ -34,7 +36,7 @@ private:
   const char* mMqttUsername;
   const char* mMqttPassword;
   const char* mMqttClientName;
-
+  bool mMqttCleanSession;
   char* mMqttLastWillTopic;
   char* mMqttLastWillMessage;
   bool mMqttLastWillRetain;
@@ -49,7 +51,9 @@ private:
   byte mTopicSubscriptionListSize;
 
   // HTTP update server related
-  const bool mEnableWebUpdater;
+  char* mUpdateServerAddress;
+  char* mUpdateServerUsername;
+  char* mUpdateServerPassword;
   ESP8266WebServer* mHttpServer;
   ESP8266HTTPUpdateServer* mHttpUpdater;
 
@@ -63,17 +67,35 @@ private:
 
   // General behaviour related
   ConnectionEstablishedCallback mConnectionEstablishedCallback;
-  const bool mEnableSerialLogs;
+  bool mEnableSerialLogs;
 
 
 public:
+  // Preferred constructors
+  EspMQTTClient(
+    const char* wifiSsid, 
+    const char* wifiPassword, 
+    const char* mqttServerIp, 
+    const char* mqttClientName = "ESP8266",
+    const short mqttServerPort = 1883);
+
+  EspMQTTClient(
+    const char* wifiSsid,
+    const char* wifiPassword,
+    const char* mqttServerIp,
+    const char* mqttUsername,
+    const char* mqttPassword,
+    const char* mqttClientName = "ESP8266",
+    const short mqttServerPort = 1883);
+
+  // Legacy constructor for version 1.3 - WILL BE DELETED SOON OR LATER
   EspMQTTClient(
     const char wifiSsid[], const char* wifiPassword,
     ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort = 1883,
-    const char* mqttUsername = "", const char* mqttPassword = "", const char* mqttClientName = "ESP8266",
+    const char* mqttUsername = NULL, const char* mqttPassword = NULL, const char* mqttClientName = "ESP8266",
     const bool enableWebUpdater = true, const bool enableSerialLogs = true);
 
-  // Legacy constructor
+  // Legacy constructor for version <= 1.2 - WILL BE DELETED SOON OR LATER
   EspMQTTClient(
     const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
     const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
@@ -82,7 +104,14 @@ public:
 
   ~EspMQTTClient();
 
-  void setLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
+  void enableDebuggingMessages(const bool enabled = true); // Allow to display usefull debugging messages. Can be set to false to disable them during program execution
+
+  void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
+  void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to mMqttUsername and mMqttPassword
+
+  void enableMQTTPersistence(); // Tell the broker to establish a persistant connection. Disabled by default. Must be called before the fisrt loop() execution
+
+  void enableLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
 
   void loop();
   bool isConnected() const;

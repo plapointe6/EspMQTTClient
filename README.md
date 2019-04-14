@@ -8,8 +8,8 @@ You just need to provide your credentials and it will manage the following thing
 - Automatically attempting to reconnect when the either WiFi or MQTT connection is lost.
 - Subscrubing/unsubscrubing to/from MQTT topics.
 - Provide a callback handling to advise when we are connected to the MQTT broker or a subscribed MQTT topic received a message.
-- Running an HTTP server secured by a password to allow remote update.
-- Printing usefull debug informations, switch the possibility off whenever debug is no longer needed.
+- Provide a function to enable an HTTP server secured by a password to allow remote update.
+- Provide a function to enable printing of usefull debug informations.
 
 ## Dependency
 

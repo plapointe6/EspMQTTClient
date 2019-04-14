@@ -3,7 +3,47 @@
 
 // =============== Constructor / destructor ===================
 
-// Legacy constructor - will be deleted soon or later
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid, 
+  const char* wifiPassword, 
+  const char* mqttServerIp, 
+  const char* mqttClientName, 
+  const short mqttServerPort) :
+  mWifiSsid(wifiSsid),
+  mWifiPassword(wifiPassword),
+  mMqttServerIp(mqttServerIp),
+  mMqttUsername(NULL),
+  mMqttPassword(NULL),
+  mMqttClientName(mqttClientName),
+  mMqttServerPort(mqttServerPort),
+  mConnectionEstablishedCallback(onConnectionEstablished)
+{
+  initialize();
+}
+
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid,
+  const char* wifiPassword,
+  const char* mqttServerIp,
+  const char* mqttUsername,
+  const char* mqttPassword,
+  const char* mqttClientName,
+  const short mqttServerPort) :
+  mWifiSsid(wifiSsid),
+  mWifiPassword(wifiPassword),
+  mMqttServerIp(mqttServerIp),
+  mMqttUsername(mqttUsername),
+  mMqttPassword(mqttPassword),
+  mMqttClientName(mqttClientName),
+  mMqttServerPort(mqttServerPort),
+  mConnectionEstablishedCallback(onConnectionEstablished)
+{
+  initialize();
+}
+
+
+//=============== Legacy constructors - will be deleted soon or later ================
+
 EspMQTTClient::EspMQTTClient(
   const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
   const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
@@ -11,13 +51,15 @@ EspMQTTClient::EspMQTTClient(
   const bool enableWebUpdater, const bool enableSerialLogs)
   : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
   mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
-  mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback),
-  mEnableWebUpdater(enableWebUpdater), mEnableSerialLogs(enableSerialLogs)
+  mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback), 
+  mEnableSerialLogs(enableSerialLogs)
 {
   initialize();
+
+  if (enableWebUpdater)
+    enableHTTPWebUpdater();
 }
 
-// Preferred constructor (new form)
 EspMQTTClient::EspMQTTClient(
   const char wifiSsid[], const char* wifiPassword,
   ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort,
@@ -25,11 +67,18 @@ EspMQTTClient::EspMQTTClient(
   const bool enableWebUpdater, const bool enableSerialLogs)
   : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
     mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
-    mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback),
-    mEnableWebUpdater(enableWebUpdater), mEnableSerialLogs(enableSerialLogs)
+    mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback), 
+  mEnableSerialLogs(enableSerialLogs)
 {
   initialize();
+
+  if (enableWebUpdater)
+    enableHTTPWebUpdater();
 }
+
+EspMQTTClient::~EspMQTTClient() {}
+
+// =============== Initialization ================
 
 void EspMQTTClient::initialize()
 {
@@ -47,23 +96,51 @@ void EspMQTTClient::initialize()
   mMqttLastWillTopic = 0;
   mMqttLastWillMessage = 0;
   mMqttLastWillRetain = false;
+  mMqttCleanSession = true;
   mMqttClient = new PubSubClient(mMqttServerIp, mMqttServerPort, *mWifiClient);
   mMqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
 
   // Web updater
-  if (mEnableWebUpdater)
+  mUpdateServerAddress = NULL;
+  mHttpServer = NULL;
+  mHttpUpdater = NULL;
+}
+
+// =============== Configuration functions, most of them must be called before the first loop() call ==============
+
+void EspMQTTClient::enableDebuggingMessages(const bool enabled)
+{
+  mEnableSerialLogs = enabled;
+}
+
+void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* password, const char* address)
+{
+  if (mHttpServer == NULL)
   {
     mHttpServer = new ESP8266WebServer(80);
     mHttpUpdater = new ESP8266HTTPUpdateServer();
+    mUpdateServerUsername = (char*)username;
+    mUpdateServerPassword = (char*)password;
+    mUpdateServerAddress = (char*)address;
   }
+  else if (mEnableSerialLogs)
+    Serial.print("SYS! You can't call enableHTTPWebUpdater() more than once !\n");
 }
 
-EspMQTTClient::~EspMQTTClient() {}
+void EspMQTTClient::enableHTTPWebUpdater(const char* address)
+{
+  if(mMqttUsername == NULL || mMqttPassword == NULL)
+    enableHTTPWebUpdater("", "", address);
+  else
+    enableHTTPWebUpdater(mMqttUsername, mMqttPassword, address);
+}
 
+void EspMQTTClient::enableMQTTPersistence()
+{
+  mMqttCleanSession = false;
+}
 
-// =============== Configuration functions, must be called before the first loop() call ==============
-
-void EspMQTTClient::setLastWillMessage(const char* topic, const char* message, const bool retain)
+void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message, const bool retain)
 {
   mMqttLastWillTopic = (char*)topic;
   mMqttLastWillMessage = (char*)message;
@@ -87,15 +164,15 @@ void EspMQTTClient::loop()
       mLastWifiConnectionSuccessMillis = millis();
       
       // Config of web updater
-      if (mEnableWebUpdater)
+      if (mHttpServer != NULL)
       {
         MDNS.begin(mMqttClientName);
-        mHttpUpdater->setup(mHttpServer, "/", mMqttUsername, mMqttPassword);
+        mHttpUpdater->setup(mHttpServer, mUpdateServerAddress, mUpdateServerUsername, mUpdateServerPassword);
         mHttpServer->begin();
         MDNS.addService("http", "tcp", 80);
       
         if (mEnableSerialLogs)
-          Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", mMqttClientName, mMqttUsername, mMqttPassword);
+          Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", mMqttClientName, mUpdateServerUsername, mUpdateServerPassword);
       }
   
       mWifiConnected = true;
@@ -120,7 +197,7 @@ void EspMQTTClient::loop()
     }
       
     // Web updater handling
-    if (mEnableWebUpdater)
+    if (mHttpServer != NULL)
       mHttpServer->handleClient();
   }
   else
@@ -254,7 +331,7 @@ void EspMQTTClient::connectToWifi()
   WiFi.begin(mWifiSsid, mWifiPassword);
 
   if (mEnableSerialLogs)
-    Serial.printf("WiFi: Connecting to %s ... ", mWifiSsid);
+    Serial.printf("\nWiFi: Connecting to %s ... \n", mWifiSsid);
   
   mLastWifiConnectionAttemptMillis = millis();
 }
@@ -264,7 +341,7 @@ void EspMQTTClient::connectToMqttBroker()
   if (mEnableSerialLogs)
     Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
 
-  if (mMqttClient->connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, true))
+  if (mMqttClient->connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession))
   {
     mMqttConnected = true;
     

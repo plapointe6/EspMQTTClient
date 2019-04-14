@@ -18,7 +18,7 @@ publish	KEYWORD2
 subscribe	KEYWORD2
 unsubscribe	KEYWORD2
 executeDelayed	KEYWORD2
+enableHTTPWebUpdater	KEYWORD2
+setLastWillMessage	KEYWORD2
 
-#######################################
-# Constants (LITERAL1)
-#######################################
+onConnectionEstablished	KEYWORD2
