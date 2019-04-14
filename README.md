@@ -4,30 +4,102 @@ This library is intended to encapsulate the handling of WiFi and MQTT connection
 You just need to provide your credentials and it will manage the following things: 
 - Connecting to a WiFi network.
 - Connecting to a MQTT broker.
-- Automatically detecting connection lost either from the WiFi client of MQTT broker.
-- Automatically attempting to reconnect when the either WiFi or MQTT connection is lost.
-- Subscrubing/unsubscrubing to/from MQTT topics.
-- Provide a callback handling to advise when we are connected to the MQTT broker or a subscribed MQTT topic received a message.
-- Provide a function to enable an HTTP server secured by a password to allow remote update.
-- Provide a function to enable printing of usefull debug informations.
+- Automatically detecting connection lost either from the WiFi client or the MQTT broker and it will retry a connection automatically.
+- Subscrubing/unsubscrubing to/from MQTT topics by a friendly callback system.
+- Provide a callback handling to advise once everything is connected (Wifi and MQTT).
+- Provide a function to enable an HTTP Update server secured by a password to allow remote update.
+- Provide a function to enable printing of usefull debug informations related to MQTT and Wifi connections.
+- Provide some other useful utilities for MQTT and Wifi management.
 
 ## Dependency
 
 The MQTT communication depends on the PubSubClient Library (https://github.com/knolleary/pubsubclient).
 
-## Functions
+From PubSubClient:
+"The maximum message size, including header, is 128 bytes by default. This is configurable via `MQTT_MAX_PACKET_SIZE` in `PubSubClient.h`"
 
-- setLastWillMessage(topic, message, retain) : Allow to set last will message, must be done in function setup() of you sketch.
-- publish(topic, message) : publish a message to the provided MQTT topic
-- subscribe(topic, callback) : subscribe to the specified topic and call the provided callback passing the received message.
-- unsubscribe(topic) : unsubscribe from the specified topic.
-- bool isConnected() : Return true if everything is connected.
-- executeDelayed(milliseconds, callback) : As ESP8366 does not like to be interrupted too long with the delay function, this function will allow a delayed execution of a function whitout interrupting the sketch.
+## Documentation
+
+### Construction
+```c++
+  EspMQTTClient(
+    const char* wifiSsid,
+    const char* wifiPassword,
+    const char* mqttServerIp,
+    const char* mqttUsername,  // Omit this parameter to disable MQTT authentification
+    const char* mqttPassword,  // Omit this parameter to disable MQTT authentification
+    const char* mqttClientName = "ESP8266",
+    const short mqttServerPort = 1883);
+```
+
+### Functions
+
+IMPORTANT : Must be called at each loop() of your sketch
+```c++
+void loop();
+```
+
+Basic functions for MQTT communications.
+```c++
+void publish(const String &topic, const String &payload, bool retain = false);
+void subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
+void unsubscribe(const String &topic);
+```
+
+Enable the display of usefull debugging messages that will output to serial.
+```c++
+void enableDebuggingMessages(const bool enabled = true)
+```
+
+Enable the web updater. This will host a simple form that will allow firmware upgrade. Must be set before the first loop() call.
+```c++
+void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/");
+
+// this one will set user and password equal to thoses set for the MQTT connection.
+void enableHTTPWebUpdater(const char* address = "/");
+```
+
+Enable last will message. Must be set before the first loop() call.
+```c++
+void enableLastWillMessage(const char* topic, const char* message, const bool retain = false);
+```
+
+Return true if everything is connected.
+```c++
+bool isConnected() 
+```
+
+As ESP8366 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
+```c++
+void executeDelayed(const long delay, DelayedExecutionCallback callback);
+```
+
+### Connection established callback
+
+To allow this library to work, you need to implement the onConnectionEstablished() function in your sketch.
+
+```c++
+void onConnectionEstablished()
+{
+  // Here you are sure that everything is connected.
+}
+```
 
 ## Example
 
 ```c++
-EspMQTTClient client(...);
+#include "EspMQTTClient.h"
+
+EspMQTTClient client(
+  "WifiSSID",
+  "WifiPassword",
+  "192.168.1.100",  // MQTT Broker server ip
+  "MQTTUsername",   // Can be omitted if not needed
+  "MQTTPassword",   // Can be omitted if not needed
+  "TestClient"      // Client name that uniquely identify your device
+);
+
+void setup() {}
 
 void onConnectionEstablished() {
 
@@ -38,6 +110,9 @@ void onConnectionEstablished() {
   client.publish("mytopic/test", "This is a message");
 }
 
+void loop() {
+  client.loop();
+}
 ```
 
-See "Esp8266MQTTClient.ino" for the complete example.
+See "Esp8266MQTTClient.ino" for the complete exemple.
