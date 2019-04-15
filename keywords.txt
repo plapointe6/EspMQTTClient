@@ -19,6 +19,7 @@ subscribe	KEYWORD2
 unsubscribe	KEYWORD2
 executeDelayed	KEYWORD2
 enableHTTPWebUpdater	KEYWORD2
-setLastWillMessage	KEYWORD2
+enableLastWillMessage	KEYWORD2
+enableDebuggingMessages	KEYWORD2
 
 onConnectionEstablished	KEYWORD2
