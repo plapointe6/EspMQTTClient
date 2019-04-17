@@ -21,6 +21,8 @@ From PubSubClient:
 ## Documentation
 
 ### Construction
+
+For Wifi and MQTT connection handling (Recommended) :
 ```c++
   EspMQTTClient(
     const char* wifiSsid,
@@ -30,6 +32,16 @@ From PubSubClient:
     const char* mqttPassword,  // Omit this parameter to disable MQTT authentification
     const char* mqttClientName = "ESP8266",
     const short mqttServerPort = 1883);
+```
+
+MQTT connection handling only :
+```c++
+  EspMQTTClient(
+    const char* mqttServerIp,
+    const short mqttServerPort,  // It is mandatory here to allow these constructors to be distinct from thoses with the Wifi handling parameters
+    const char* mqttUsername,    // Omit this parameter to disable MQTT authentification
+    const char* mqttPassword,    // Omit this parameter to disable MQTT authentification
+    const char* mqttClientName = "ESP8266");
 ```
 
 ### Functions
@@ -85,6 +97,12 @@ void onConnectionEstablished()
 }
 ```
 
+In some special cases, like if you want to handle more than one MQTT connection in the same sketch, you can override this callback to another one for the second MQTT client using this function : 
+```c++
+void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback);
+```
+See exemple "twoMQTTClientHandling.ino" for more details.
+
 ## Example
 
 ```c++
@@ -115,4 +133,4 @@ void loop() {
 }
 ```
 
-See "Esp8266MQTTClient.ino" for the complete exemple.
+See "SimpleMQTTClient.ino" for the complete exemple.

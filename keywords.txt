@@ -21,5 +21,6 @@ executeDelayed	KEYWORD2
 enableHTTPWebUpdater	KEYWORD2
 enableLastWillMessage	KEYWORD2
 enableDebuggingMessages	KEYWORD2
+setOnConnectionEstablishedCallback	KEYWORD2
 
 onConnectionEstablished	KEYWORD2
