@@ -1,15 +1,15 @@
-# MQTT and Wifi handling for ESP8266
+# MQTT and Wifi handling for ESP8266 and ESP32
 
-This library is intended to encapsulate the handling of WiFi and MQTT connections of an ESP8266.
+This library is intended to encapsulate the handling of WiFi and MQTT connections of an ESP8266/ESP32.
 You just need to provide your credentials and it will manage the following things: 
 - Connecting to a WiFi network.
 - Connecting to a MQTT broker.
 - Automatically detecting connection lost either from the WiFi client or the MQTT broker and it will retry a connection automatically.
 - Subscrubing/unsubscrubing to/from MQTT topics by a friendly callback system.
 - Provide a callback handling to advise once everything is connected (Wifi and MQTT).
-- Provide a function to enable an HTTP Update server secured by a password to allow remote update.
 - Provide a function to enable printing of usefull debug informations related to MQTT and Wifi connections.
 - Provide some other useful utilities for MQTT and Wifi management.
+- Provide a function to enable an HTTP Update server secured by a password to allow remote update.
 
 ## Dependency
 
@@ -21,6 +21,8 @@ From PubSubClient:
 ## Documentation
 
 ### Construction
+
+For Wifi and MQTT connection handling (Recommended) :
 ```c++
   EspMQTTClient(
     const char* wifiSsid,
@@ -30,6 +32,16 @@ From PubSubClient:
     const char* mqttPassword,  // Omit this parameter to disable MQTT authentification
     const char* mqttClientName = "ESP8266",
     const short mqttServerPort = 1883);
+```
+
+MQTT connection handling only :
+```c++
+  EspMQTTClient(
+    const char* mqttServerIp,
+    const short mqttServerPort,  // It is mandatory here to allow these constructors to be distinct from thoses with the Wifi handling parameters
+    const char* mqttUsername,    // Omit this parameter to disable MQTT authentification
+    const char* mqttPassword,    // Omit this parameter to disable MQTT authentification
+    const char* mqttClientName = "ESP8266");
 ```
 
 ### Functions
@@ -85,6 +97,12 @@ void onConnectionEstablished()
 }
 ```
 
+In some special cases, like if you want to handle more than one MQTT connection in the same sketch, you can override this callback to another one for the second MQTT client using this function : 
+```c++
+void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback);
+```
+See exemple "twoMQTTClientHandling.ino" for more details.
+
 ## Example
 
 ```c++
@@ -115,4 +133,4 @@ void loop() {
 }
 ```
 
-See "Esp8266MQTTClient.ino" for the complete exemple.
+See "SimpleMQTTClient.ino" for the complete exemple.

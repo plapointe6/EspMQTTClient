@@ -3,22 +3,83 @@
 
 // =============== Constructor / destructor ===================
 
+// MQTT only (no wifi connection attempt)
+EspMQTTClient::EspMQTTClient(
+  const char* mqttServerIp,
+  const short mqttServerPort,
+  const char* mqttClientName) :
+  EspMQTTClient(NULL, NULL, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
+{
+}
+EspMQTTClient::EspMQTTClient(
+  const char* mqttServerIp,
+  const short mqttServerPort,
+  const char* mqttUsername,
+  const char* mqttPassword,
+  const char* mqttClientName) :
+  EspMQTTClient(NULL, NULL, mqttServerIp, mqttUsername, mqttPassword, mqttClientName, mqttServerPort)
+{
+}
+
+// Wifi and MQTT handling
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid,
+  const char* wifiPassword,
+  const char* mqttServerIp,
+  const char* mqttClientName,
+  const short mqttServerPort) :
+  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
+{
+}
+
+// Warning : for old constructor support, this will be deleted soon or later
 EspMQTTClient::EspMQTTClient(
   const char* wifiSsid, 
   const char* wifiPassword, 
-  const char* mqttServerIp, 
+  const char* mqttServerIp,
+  const short mqttServerPort, 
+  const char* mqttUsername, 
+  const char* mqttPassword,
   const char* mqttClientName, 
-  const short mqttServerPort) :
-  mWifiSsid(wifiSsid),
-  mWifiPassword(wifiPassword),
-  mMqttServerIp(mqttServerIp),
-  mMqttUsername(NULL),
-  mMqttPassword(NULL),
-  mMqttClientName(mqttClientName),
-  mMqttServerPort(mqttServerPort),
-  mConnectionEstablishedCallback(onConnectionEstablished)
+  ConnectionEstablishedCallback connectionEstablishedCallback,
+  const bool enableWebUpdater, 
+  const bool enableSerialLogs) :
+  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, mqttUsername, mqttPassword, mqttClientName, mqttServerPort)
 {
-  initialize();
+  if (enableWebUpdater)
+    enableHTTPWebUpdater();
+
+  if (enableSerialLogs)
+    enableDebuggingMessages();
+
+  setOnConnectionEstablishedCallback(connectionEstablishedCallback);
+
+  mShowLegacyConstructorWarning = true;
+}
+
+// Warning : for old constructor support, this will be deleted soon or later
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid, 
+  const char* wifiPassword,
+  ConnectionEstablishedCallback connectionEstablishedCallback, 
+  const char* mqttServerIp, 
+  const short mqttServerPort,
+  const char* mqttUsername,
+  const char* mqttPassword, 
+  const char* mqttClientName,
+  const bool enableWebUpdater,
+  const bool enableSerialLogs) :
+  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, mqttUsername, mqttPassword, mqttClientName, mqttServerPort)
+{
+  if (enableWebUpdater)
+    enableHTTPWebUpdater();
+
+  if (enableSerialLogs)
+    enableDebuggingMessages();
+
+  setOnConnectionEstablishedCallback(connectionEstablishedCallback);
+
+  mShowLegacyConstructorWarning = true;
 }
 
 EspMQTTClient::EspMQTTClient(
@@ -36,73 +97,22 @@ EspMQTTClient::EspMQTTClient(
   mMqttPassword(mqttPassword),
   mMqttClientName(mqttClientName),
   mMqttServerPort(mqttServerPort),
-  mConnectionEstablishedCallback(onConnectionEstablished)
+  mMqttClient(mqttServerIp, mqttServerPort, mWifiClient)
 {
-  initialize();
-}
-
-
-//=============== Legacy constructors - will be deleted soon or later ================
-
-EspMQTTClient::EspMQTTClient(
-  const char wifiSsid[], const char* wifiPassword, const char* mqttServerIp,
-  const short mqttServerPort, const char* mqttUsername, const char* mqttPassword,
-  const char* mqttClientName, ConnectionEstablishedCallback connectionEstablishedCallback,
-  const bool enableWebUpdater, const bool enableSerialLogs)
-  : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
-  mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
-  mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback)
-{
-  initialize();
-
-  if (enableWebUpdater)
-    enableHTTPWebUpdater();
-
-  if (enableSerialLogs)
-    enableDebuggingMessages();
-}
-
-EspMQTTClient::EspMQTTClient(
-  const char wifiSsid[], const char* wifiPassword,
-  ConnectionEstablishedCallback connectionEstablishedCallback, const char* mqttServerIp, const short mqttServerPort,
-  const char* mqttUsername, const char* mqttPassword, const char* mqttClientName,
-  const bool enableWebUpdater, const bool enableSerialLogs)
-  : mWifiSsid(wifiSsid), mWifiPassword(wifiPassword), mMqttServerIp(mqttServerIp),
-    mMqttServerPort(mqttServerPort), mMqttUsername(mqttUsername), mMqttPassword(mqttPassword),
-    mMqttClientName(mqttClientName), mConnectionEstablishedCallback(connectionEstablishedCallback)
-{
-  initialize();
-
-  if (enableWebUpdater)
-    enableHTTPWebUpdater();
-
-  if (enableSerialLogs)
-    enableDebuggingMessages();
-}
-
-EspMQTTClient::~EspMQTTClient() {}
-
-// =============== Initialization ================
-
-void EspMQTTClient::initialize()
-{
-  mTopicSubscriptionListSize = 0;
-
   // WiFi connection
   mWifiConnected = false;
   mLastWifiConnectionAttemptMillis = 0;
   mLastWifiConnectionSuccessMillis = 0;
-  mWifiClient = new WiFiClient();
 
   // MQTT client
+  mTopicSubscriptionListSize = 0;
   mMqttConnected = false;
   mLastMqttConnectionMillis = 0;
   mMqttLastWillTopic = 0;
   mMqttLastWillMessage = 0;
   mMqttLastWillRetain = false;
   mMqttCleanSession = true;
-  mMqttClient = new PubSubClient(mMqttServerIp, mMqttServerPort, *mWifiClient);
-  mMqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
+  mMqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
 
   // Web updater
   mUpdateServerAddress = NULL;
@@ -111,7 +121,18 @@ void EspMQTTClient::initialize()
 
   // other
   mEnableSerialLogs = false;
+  mConnectionEstablishedCallback = onConnectionEstablished;
+  mShowLegacyConstructorWarning = false;
 }
+
+EspMQTTClient::~EspMQTTClient()
+{
+  if (mHttpServer != NULL)
+    delete mHttpServer;
+  if (mHttpUpdater != NULL)
+    delete mHttpUpdater;
+}
+
 
 // =============== Configuration functions, most of them must be called before the first loop() call ==============
 
@@ -124,8 +145,8 @@ void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* passw
 {
   if (mHttpServer == NULL)
   {
-    mHttpServer = new ESP8266WebServer(80);
-    mHttpUpdater = new ESP8266HTTPUpdateServer();
+    mHttpServer = new WebServer(80);
+    mHttpUpdater = new ESPHTTPUpdateServer();
     mUpdateServerUsername = (char*)username;
     mUpdateServerPassword = (char*)password;
     mUpdateServerAddress = (char*)address;
@@ -163,6 +184,7 @@ void EspMQTTClient::loop()
   
   if (WiFi.status() == WL_CONNECTED)
   {
+    // If we just being connected to wifi
     if (!mWifiConnected)
     {
       if (mEnableSerialLogs)
@@ -186,8 +208,8 @@ void EspMQTTClient::loop()
     }
     
     // MQTT handling
-    if (mMqttClient->connected())
-      mMqttClient->loop();
+    if (mMqttClient.connected())
+      mMqttClient.loop();
     else
     {
       if (mMqttConnected)
@@ -207,7 +229,7 @@ void EspMQTTClient::loop()
     if (mHttpServer != NULL)
       mHttpServer->handleClient();
   }
-  else
+  else // If we are not connected to wifi
   {
     if (mWifiConnected) 
     {
@@ -215,14 +237,18 @@ void EspMQTTClient::loop()
         Serial.println("WiFi! Lost connection.");
       
       mWifiConnected = false;
-      WiFi.disconnect();
+
+      // If we handle wifi, we force disconnection to clear the last connection
+      if (mWifiSsid != NULL)
+        WiFi.disconnect();
     }
     
-    // We retry to connect to the wifi if there was no attempt since the last connection lost
-    if (mLastWifiConnectionAttemptMillis == 0 || mLastWifiConnectionSuccessMillis > mLastWifiConnectionAttemptMillis)
+    // We retry to connect to the wifi if we handle it and there was no attempt since the last connection lost
+    if (mWifiSsid != NULL && (mLastWifiConnectionAttemptMillis == 0 || mLastWifiConnectionSuccessMillis > mLastWifiConnectionAttemptMillis))
       connectToWifi();
   }
   
+  // Delayed execution handling
   if (mDelayedExecutionListSize > 0)
   {
     long currentMillis = millis();
@@ -239,16 +265,19 @@ void EspMQTTClient::loop()
       }
     }
   }
-}
 
-bool EspMQTTClient::isConnected() const
-{
-  return mWifiConnected && mMqttConnected;
+  // Old constructor support warning
+  if (mEnableSerialLogs && mShowLegacyConstructorWarning)
+  {
+    mShowLegacyConstructorWarning = false;
+    Serial.print("SYS! You are using a constructor that will be deleted soon, please update your code with the new construction format.\n");
+  }
+
 }
 
 void EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
-  mMqttClient->publish(topic.c_str(), payload.c_str(), retain);
+  mMqttClient.publish(topic.c_str(), payload.c_str(), retain);
 
   if (mEnableSerialLogs)
     Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
@@ -277,7 +306,7 @@ void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   }
 
   // All checks are passed - do the job
-  mMqttClient->subscribe(topic.c_str());
+  mMqttClient.subscribe(topic.c_str());
   mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback };
   
   if (mEnableSerialLogs)
@@ -295,7 +324,7 @@ void EspMQTTClient::unsubscribe(const String &topic)
       if (mTopicSubscriptionList[i].topic.equals(topic))
       {
         found = true;
-        mMqttClient->unsubscribe(topic.c_str());
+        mMqttClient.unsubscribe(topic.c_str());
         if (mEnableSerialLogs)
           Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
       }
@@ -348,7 +377,7 @@ void EspMQTTClient::connectToMqttBroker()
   if (mEnableSerialLogs)
     Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
 
-  if (mMqttClient->connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession))
+  if (mMqttClient.connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession))
   {
     mMqttConnected = true;
     
@@ -361,7 +390,7 @@ void EspMQTTClient::connectToMqttBroker()
   {
     Serial.print("unable to connect, ");
 
-    switch (mMqttClient->state())
+    switch (mMqttClient.state())
     {
       case -4:
         Serial.println("MQTT_CONNECTION_TIMEOUT");
