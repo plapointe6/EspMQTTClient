@@ -1,4 +1,4 @@
-# MQTT and Wifi handling for ESP8266
+# MQTT and Wifi handling for ESP8266 and ESP32
 
 This library is intended to encapsulate the handling of WiFi and MQTT connections of an ESP8266/ESP32.
 You just need to provide your credentials and it will manage the following things: 
