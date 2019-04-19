@@ -1,11 +1,29 @@
 #ifndef ESP_MQTT_CLIENT_H
 #define ESP_MQTT_CLIENT_H
 
-#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <ESP8266HTTPUpdateServer.h>
+
+#ifdef ESP8266
+
+  #include <ESP8266WiFi.h>
+  #include <ESP8266WebServer.h>
+  #include <ESP8266mDNS.h>
+  #include <ESP8266HTTPUpdateServer.h>
+  
+  #define WebServer ESP8266WebServer
+  #define ESPmDNS ESP8266mDNS
+  #define ESPHTTPUpdateServer ESP8266HTTPUpdateServer
+
+#else // for ESP32
+
+  #include <WiFiClient.h>
+  #include <WebServer.h>
+  #include <ESPmDNS.h>
+  #include "ESP32HTTPUpdateServer.h"
+
+  #define ESPHTTPUpdateServer ESP32HTTPUpdateServer
+
+#endif
 
 #define MAX_TOPIC_SUBSCRIPTION_LIST_SIZE 10
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
@@ -54,8 +72,8 @@ private:
   char* mUpdateServerAddress;
   char* mUpdateServerUsername;
   char* mUpdateServerPassword;
-  ESP8266WebServer* mHttpServer;
-  ESP8266HTTPUpdateServer* mHttpUpdater;
+  WebServer* mHttpServer;
+  ESPHTTPUpdateServer* mHttpUpdater;
 
   // Delayed execution related
   struct DelayedExecutionRecord {

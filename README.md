@@ -1,15 +1,15 @@
 # MQTT and Wifi handling for ESP8266
 
-This library is intended to encapsulate the handling of WiFi and MQTT connections of an ESP8266.
+This library is intended to encapsulate the handling of WiFi and MQTT connections of an ESP8266/ESP32.
 You just need to provide your credentials and it will manage the following things: 
 - Connecting to a WiFi network.
 - Connecting to a MQTT broker.
 - Automatically detecting connection lost either from the WiFi client or the MQTT broker and it will retry a connection automatically.
 - Subscrubing/unsubscrubing to/from MQTT topics by a friendly callback system.
 - Provide a callback handling to advise once everything is connected (Wifi and MQTT).
-- Provide a function to enable an HTTP Update server secured by a password to allow remote update.
 - Provide a function to enable printing of usefull debug informations related to MQTT and Wifi connections.
 - Provide some other useful utilities for MQTT and Wifi management.
+- Provide a function to enable an HTTP Update server secured by a password to allow remote update.
 
 ## Dependency
 

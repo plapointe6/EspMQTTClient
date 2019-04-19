@@ -145,8 +145,8 @@ void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* passw
 {
   if (mHttpServer == NULL)
   {
-    mHttpServer = new ESP8266WebServer(80);
-    mHttpUpdater = new ESP8266HTTPUpdateServer();
+    mHttpServer = new WebServer(80);
+    mHttpUpdater = new ESPHTTPUpdateServer();
     mUpdateServerUsername = (char*)username;
     mUpdateServerPassword = (char*)password;
     mUpdateServerAddress = (char*)address;
