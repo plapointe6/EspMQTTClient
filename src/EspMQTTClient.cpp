@@ -227,7 +227,13 @@ void EspMQTTClient::loop()
       
     // Web updater handling
     if (mHttpServer != NULL)
+    {
       mHttpServer->handleClient();
+      #ifdef ESP8266
+        MDNS.update(); // We need to do this only for ESP8266
+      #endif
+    }
+      
   }
   else // If we are not connected to wifi
   {
@@ -364,6 +370,7 @@ void EspMQTTClient::executeDelayed(const long delay, DelayedExecutionCallback ca
 void EspMQTTClient::connectToWifi()
 {
   WiFi.mode(WIFI_STA);
+  WiFi.hostname(mMqttClientName);
   WiFi.begin(mWifiSsid, mWifiPassword);
 
   if (mEnableSerialLogs)
