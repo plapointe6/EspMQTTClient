@@ -166,7 +166,7 @@ public:
   void unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
 
   // Other
-  void executeDelayed(const long delay, DelayedExecutionCallback callback);
+  void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
 
   inline bool isConnected() const { return mWifiConnected && mMqttConnected; };
   inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { mConnectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch

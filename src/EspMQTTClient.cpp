@@ -180,8 +180,8 @@ void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message
 
 void EspMQTTClient::loop()
 {
-  long currentMillis = millis();
-  
+  unsigned long currentMillis = millis();
+
   if (WiFi.status() == WL_CONNECTED)
   {
     // If we just being connected to wifi
@@ -257,8 +257,8 @@ void EspMQTTClient::loop()
   // Delayed execution handling
   if (mDelayedExecutionListSize > 0)
   {
-    long currentMillis = millis();
-    
+    unsigned long currentMillis = millis();
+
     for(byte i = 0 ; i < mDelayedExecutionListSize ; i++)
     {
       if (mDelayedExecutionList[i].targetMillis <= currentMillis)
@@ -349,7 +349,7 @@ void EspMQTTClient::unsubscribe(const String &topic)
     Serial.println("MQTT! Topic cannot be found to unsubscribe, ignored.");
 }
 
-void EspMQTTClient::executeDelayed(const long delay, DelayedExecutionCallback callback)
+void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
 {
   if (mDelayedExecutionListSize < MAX_DELAYED_EXECUTION_LIST_SIZE)
   {
