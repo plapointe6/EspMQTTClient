@@ -93,10 +93,10 @@ EspMQTTClient::EspMQTTClient(
   mWifiSsid(wifiSsid),
   mWifiPassword(wifiPassword),
   mMqttServerIp(mqttServerIp),
+  mMqttServerPort(mqttServerPort),
   mMqttUsername(mqttUsername),
   mMqttPassword(mqttPassword),
   mMqttClientName(mqttClientName),
-  mMqttServerPort(mqttServerPort),
   mMqttClient(mqttServerIp, mqttServerPort, mWifiClient)
 {
   // WiFi connection
