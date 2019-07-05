@@ -50,10 +50,10 @@ private:
   bool mMqttConnected;
   unsigned long mLastMqttConnectionMillis;
   const char* mMqttServerIp;
-  const short mMqttServerPort;
   const char* mMqttUsername;
   const char* mMqttPassword;
   const char* mMqttClientName;
+  const short mMqttServerPort;
   bool mMqttCleanSession;
   char* mMqttLastWillTopic;
   char* mMqttLastWillMessage;
@@ -81,7 +81,7 @@ private:
     DelayedExecutionCallback callback;
   };
   DelayedExecutionRecord mDelayedExecutionList[MAX_DELAYED_EXECUTION_LIST_SIZE];
-  byte mDelayedExecutionListSize = 0;
+  byte mDelayedExecutionListSize;
 
   // General behaviour related
   ConnectionEstablishedCallback mConnectionEstablishedCallback;

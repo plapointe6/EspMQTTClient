@@ -16,8 +16,8 @@ class ESP32HTTPUpdateServer
 private:
   WebServer*_server;
 
-  char* _username;
-  char* _password;
+  String _username;
+  String _password;
   bool _serialDebugging;
 
 public:
@@ -28,7 +28,7 @@ public:
     _password = "";
   }
 
-  void setup(WebServer* server, char* path = "/", char* username = "", char* password = "")
+  void setup(WebServer* server, const char* path = "/", const char* username = "", const char* password = "")
   {
     _server = server;
     _username = username;
@@ -37,7 +37,7 @@ public:
     // Get of the index handling
     _server->on(path, HTTP_GET, [&]() {
       // Force authentication if a user and password are defined
-      if (_username != "" && _password != "" && !_server->authenticate(_username, _password))
+      if (_username.length() > 0 && _password.length() > 0 && !_server->authenticate(_username.c_str(), _password.c_str()))
         return _server->requestAuthentication();
 
       _server->sendHeader("Connection", "close");
@@ -57,7 +57,7 @@ public:
       if (upload.status == UPLOAD_FILE_START) 
       {
         // Check if we are authenticated
-        if (_username == "" || _password == "" || _server->authenticate(_username, _password))
+        if (_username.length() == 0 || _password.length() == 0 || _server->authenticate(_username.c_str(), _password.c_str()))
         {
           if (_serialDebugging)
             Serial.printf("Unauthenticated Update\n");

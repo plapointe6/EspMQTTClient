@@ -93,10 +93,10 @@ EspMQTTClient::EspMQTTClient(
   mWifiSsid(wifiSsid),
   mWifiPassword(wifiPassword),
   mMqttServerIp(mqttServerIp),
-  mMqttServerPort(mqttServerPort),
   mMqttUsername(mqttUsername),
   mMqttPassword(mqttPassword),
   mMqttClientName(mqttClientName),
+  mMqttServerPort(mqttServerPort),
   mMqttClient(mqttServerIp, mqttServerPort, mWifiClient)
 {
   // WiFi connection
@@ -123,6 +123,7 @@ EspMQTTClient::EspMQTTClient(
   mEnableSerialLogs = false;
   mConnectionEstablishedCallback = onConnectionEstablished;
   mShowLegacyConstructorWarning = false;
+  mDelayedExecutionListSize = 0;
 }
 
 EspMQTTClient::~EspMQTTClient()
@@ -264,7 +265,7 @@ void EspMQTTClient::loop()
       if (mDelayedExecutionList[i].targetMillis <= currentMillis)
       {
         (*mDelayedExecutionList[i].callback)();
-        for(int j = i ; j < mDelayedExecutionListSize-1 ; j++)
+        for(byte j = i ; j < mDelayedExecutionListSize-1 ; j++)
           mDelayedExecutionList[j] = mDelayedExecutionList[j + 1];
         mDelayedExecutionListSize--;
         i--;
@@ -301,7 +302,7 @@ void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
 
   // Check the duplicate of the subscription to the topic
   bool found = false;
-  for (int i = 0; i < mTopicSubscriptionListSize && !found; i++)
+  for (byte i = 0; i < mTopicSubscriptionListSize && !found; i++)
     found = mTopicSubscriptionList[i].topic.equals(topic);
 
   if (found) 
@@ -323,7 +324,7 @@ void EspMQTTClient::unsubscribe(const String &topic)
 {
   bool found = false;
 
-  for (int i = 0; i < mTopicSubscriptionListSize; i++)
+  for (byte i = 0; i < mTopicSubscriptionListSize; i++)
   {
     if (!found)
     {
@@ -370,7 +371,11 @@ void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCa
 void EspMQTTClient::connectToWifi()
 {
   WiFi.mode(WIFI_STA);
-  WiFi.hostname(mMqttClientName);
+  #ifdef ESP32
+    WiFi.setHostname(mMqttClientName);
+  #else
+    WiFi.hostname(mMqttClientName);
+  #endif
   WiFi.begin(mWifiSsid, mWifiPassword);
 
   if (mEnableSerialLogs)
@@ -457,7 +462,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
     Serial.printf("MQTT >> [%s] %s\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
-  for (int i = 0 ; i < mTopicSubscriptionListSize ; i++)
+  for (byte i = 0 ; i < mTopicSubscriptionListSize ; i++)
   {
     if (mTopicSubscriptionList[i].topic.equals(topic))
       (*mTopicSubscriptionList[i].callback)(payloadStr); // Call the callback
