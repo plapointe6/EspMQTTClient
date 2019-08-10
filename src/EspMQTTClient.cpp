@@ -147,7 +147,7 @@ void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* passw
   if (mHttpServer == NULL)
   {
     mHttpServer = new WebServer(80);
-    mHttpUpdater = new ESPHTTPUpdateServer();
+    mHttpUpdater = new ESPHTTPUpdateServer(mEnableSerialLogs);
     mUpdateServerUsername = (char*)username;
     mUpdateServerPassword = (char*)password;
     mUpdateServerAddress = (char*)address;

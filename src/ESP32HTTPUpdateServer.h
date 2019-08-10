@@ -8,13 +8,13 @@
 #include <WebServer.h>
 #include <Update.h>
 
-#define ESP32_WEB_UPDATE_HTML "<form method='POST' action='' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>"
+#define ESP32_WEB_UPDATE_HTML "<html><body><form method='POST' action='' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form></body></html>"
 #define ESP32_WEB_UPDATE_SUCCESS_RESPONSE "<META http-equiv=\"refresh\" content=\"10;URL=/\">Update Success! Rebooting...\n"
 
 class ESP32HTTPUpdateServer
 {
 private:
-  WebServer*_server;
+  WebServer* _server;
 
   String _username;
   String _password;
@@ -57,7 +57,7 @@ public:
       if (upload.status == UPLOAD_FILE_START) 
       {
         // Check if we are authenticated
-        if (_username.length() == 0 || _password.length() == 0 || _server->authenticate(_username.c_str(), _password.c_str()))
+        if (!(_username.length() == 0 || _password.length() == 0 || _server->authenticate(_username.c_str(), _password.c_str())))
         {
           if (_serialDebugging)
             Serial.printf("Unauthenticated Update\n");
@@ -73,7 +73,7 @@ public:
         }
 
         // Starting update
-        bool error = Update.begin();
+        bool error = Update.begin(UPDATE_SIZE_UNKNOWN);
         if (_serialDebugging && error)
           Update.printError(Serial);
       }
