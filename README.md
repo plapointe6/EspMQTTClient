@@ -63,7 +63,7 @@ Enable the display of usefull debugging messages that will output to serial.
 void enableDebuggingMessages(const bool enabled = true)
 ```
 
-Enable the web updater. This will host a simple form that will allow firmware upgrade. Must be set before the first loop() call.
+Enable the web updater. This will host a simple form that will allow firmware upgrade (using, e.g., the `.bin` file produced by "Export Compiled Binary" in the Arduino IDE's "Sketch" menu). Must be set before the first loop() call.
 ```c++
 void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/");
 
