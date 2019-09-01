@@ -67,7 +67,7 @@ Enable the web updater. This will host a simple form that will allow firmware up
 ```c++
 void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/");
 
-// this one will set user and password equal to thoses set for the MQTT connection.
+// this one will set user and password equal to those set for the MQTT connection.
 void enableHTTPWebUpdater(const char* address = "/");
 ```
 
