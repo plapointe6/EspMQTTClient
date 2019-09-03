@@ -122,7 +122,7 @@ public:
     const short mqttServerPort,
     const char* mqttClientName = "ESP8266");
 
-  // Legacy constructor for version 1.3 - WILL BE DELETED SOON OR LATER
+  // Legacy constructor for version 1.3 - WILL BE DELETED SOONER OR LATER
   EspMQTTClient(
     const char* wifiSsid, 
     const char* wifiPassword,
@@ -135,9 +135,9 @@ public:
     const bool enableWebUpdater = true, 
     const bool enableSerialLogs = true);
 
-  // Legacy constructor for version <= 1.2 - WILL BE DELETED SOON OR LATER
+  // Legacy constructor for version <= 1.2 - WILL BE DELETED SOONER OR LATER
   EspMQTTClient(
-    const char* wifiSsid, 
+    const char* wifiSsid,
     const char* wifiPassword, 
     const char* mqttServerIp,
     const short mqttServerPort, 
@@ -150,11 +150,11 @@ public:
 
   ~EspMQTTClient();
 
-  // Optionnal functionnalities
-  void enableDebuggingMessages(const bool enabled = true); // Allow to display usefull debugging messages. Can be set to false to disable them during program execution
+  // Optional functionality
+  void enableDebuggingMessages(const bool enabled = true); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
   void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
   void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to mMqttUsername and mMqttPassword
-  void enableMQTTPersistence(); // Tell the broker to establish a persistant connection. Disabled by default. Must be called before the fisrt loop() execution
+  void enableMQTTPersistence(); // Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
   void enableLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
 
   // Main loop, to call at each sketch loop()

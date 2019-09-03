@@ -7,7 +7,7 @@ You just need to provide your credentials and it will manage the following thing
 - Automatically detecting connection lost either from the WiFi client or the MQTT broker and it will retry a connection automatically.
 - Subscrubing/unsubscrubing to/from MQTT topics by a friendly callback system.
 - Provide a callback handling to advise once everything is connected (Wifi and MQTT).
-- Provide a function to enable printing of usefull debug informations related to MQTT and Wifi connections.
+- Provide a function to enable printing of useful debug information related to MQTT and Wifi connections.
 - Provide some other useful utilities for MQTT and Wifi management.
 - Provide a function to enable an HTTP Update server secured by a password to allow remote update.
 
@@ -38,7 +38,7 @@ MQTT connection handling only :
 ```c++
   EspMQTTClient(
     const char* mqttServerIp,
-    const short mqttServerPort,  // It is mandatory here to allow these constructors to be distinct from thoses with the Wifi handling parameters
+    const short mqttServerPort,  // It is mandatory here to allow these constructors to be distinct from those with the Wifi handling parameters
     const char* mqttUsername,    // Omit this parameter to disable MQTT authentification
     const char* mqttPassword,    // Omit this parameter to disable MQTT authentification
     const char* mqttClientName = "ESP8266");
@@ -67,7 +67,7 @@ Enable the web updater. This will host a simple form that will allow firmware up
 ```c++
 void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/");
 
-// this one will set user and password equal to thoses set for the MQTT connection.
+// this one will set user and password equal to those set for the MQTT connection.
 void enableHTTPWebUpdater(const char* address = "/");
 ```
 
@@ -133,4 +133,4 @@ void loop() {
 }
 ```
 
-See "SimpleMQTTClient.ino" for the complete exemple.
+See "SimpleMQTTClient.ino" for the complete example.
