@@ -161,9 +161,9 @@ public:
   void loop();
 
   // MQTT related
-  void publish(const String &topic, const String &payload, bool retain = false);
-  void subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
-  void unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+  bool publish(const String &topic, const String &payload, bool retain = false);
+  bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
+  bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
 
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
