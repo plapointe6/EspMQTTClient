@@ -124,6 +124,7 @@ EspMQTTClient::EspMQTTClient(
   mConnectionEstablishedCallback = onConnectionEstablished;
   mShowLegacyConstructorWarning = false;
   mDelayedExecutionListSize = 0;
+  mConnectionEstablishedCount = 0;
 }
 
 EspMQTTClient::~EspMQTTClient()
@@ -421,6 +422,7 @@ void EspMQTTClient::connectToMqttBroker()
     if (mEnableSerialLogs) 
       Serial.println("ok.");
 
+    mConnectionEstablishedCount++;
     (*mConnectionEstablishedCallback)();
   }
   else if (mEnableSerialLogs)

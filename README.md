@@ -83,6 +83,11 @@ bool isWifiConnected() // Return true if WiFi is connected.
 bool isMqttConnected() // Return true if MQTT is connected.
 ```
 
+Return the number of time onConnectionEstablished has been called since the beginning. Can be useful if you need to monitor the number of times the connection has dropped.
+```c++
+void getConnectionEstablishedCount();
+```
+
 As ESP8366 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
 ```c++
 void executeDelayed(const long delay, DelayedExecutionCallback callback);
