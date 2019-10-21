@@ -78,9 +78,9 @@ void enableLastWillMessage(const char* topic, const char* message, const bool re
 
 Connection status
 ```c++
-bool isConnected() // Return true if everything is connected.
-bool isWifiConnected() // Return true if WiFi is connected.
-bool isMqttConnected() // Return true if MQTT is connected.
+bool isConnected(); // Return true if everything is connected.
+bool isWifiConnected(); // Return true if WiFi is connected.
+bool isMqttConnected(); // Return true if MQTT is connected.
 ```
 
 Return the number of time onConnectionEstablished has been called since the beginning. Can be useful if you need to monitor the number of times the connection has dropped.
