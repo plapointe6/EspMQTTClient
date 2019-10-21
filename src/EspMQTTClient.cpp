@@ -124,6 +124,7 @@ EspMQTTClient::EspMQTTClient(
   mConnectionEstablishedCallback = onConnectionEstablished;
   mShowLegacyConstructorWarning = false;
   mDelayedExecutionListSize = 0;
+  mConnectionEstablishedCount = 0;
 }
 
 EspMQTTClient::~EspMQTTClient()
@@ -282,22 +283,29 @@ void EspMQTTClient::loop()
 
 }
 
-void EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
+bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
-  mMqttClient.publish(topic.c_str(), payload.c_str(), retain);
+  bool success = mMqttClient.publish(topic.c_str(), payload.c_str(), retain);
 
-  if (mEnableSerialLogs)
-    Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
+  if (mEnableSerialLogs) 
+  {
+    if(success)
+      Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
+    else
+      Serial.println("MQTT! publish failed, is the message too long ?"); // This can occurs if the message is too long according to the maximum defined in PubsubClient.h
+  }
+
+  return success;
 }
 
-void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
+bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
   // Check the possibility to add a new topic
   if (mTopicSubscriptionListSize >= MAX_TOPIC_SUBSCRIPTION_LIST_SIZE) 
   {
     if (mEnableSerialLogs)
       Serial.println("MQTT! Subscription list is full, ignored.");
-    return;
+    return false;
   }
 
   // Check the duplicate of the subscription to the topic
@@ -309,20 +317,30 @@ void EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   {
     if (mEnableSerialLogs)
       Serial.printf("MQTT! Subscribed to [%s] already, ignored.\n", topic.c_str());
-    return;
+    return false;
   }
 
   // All checks are passed - do the job
-  mMqttClient.subscribe(topic.c_str());
-  mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback };
+  bool success = mMqttClient.subscribe(topic.c_str());
+
+  if(success)
+    mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback };
   
   if (mEnableSerialLogs)
-    Serial.printf("MQTT: Subscribed to [%s]\n", topic.c_str());
+  {
+    if(success)
+      Serial.printf("MQTT: Subscribed to [%s]\n", topic.c_str());
+    else
+      Serial.println("MQTT! subscribe failed");
+  }
+
+  return success;
 }
 
-void EspMQTTClient::unsubscribe(const String &topic)
+bool EspMQTTClient::unsubscribe(const String &topic)
 {
   bool found = false;
+  bool success = false;
 
   for (byte i = 0; i < mTopicSubscriptionListSize; i++)
   {
@@ -331,9 +349,15 @@ void EspMQTTClient::unsubscribe(const String &topic)
       if (mTopicSubscriptionList[i].topic.equals(topic))
       {
         found = true;
-        mMqttClient.unsubscribe(topic.c_str());
+        success = mMqttClient.unsubscribe(topic.c_str());
+
         if (mEnableSerialLogs)
-          Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
+        {
+          if(success)
+            Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
+          else
+            Serial.println("MQTT! unsubscribe failed");
+        }
       }
     }
 
@@ -348,6 +372,8 @@ void EspMQTTClient::unsubscribe(const String &topic)
     mTopicSubscriptionListSize--;
   else if (mEnableSerialLogs)
     Serial.println("MQTT! Topic cannot be found to unsubscribe, ignored.");
+
+  return success;
 }
 
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
@@ -396,6 +422,7 @@ void EspMQTTClient::connectToMqttBroker()
     if (mEnableSerialLogs) 
       Serial.println("ok.");
 
+    mConnectionEstablishedCount++;
     (*mConnectionEstablishedCallback)();
   }
   else if (mEnableSerialLogs)

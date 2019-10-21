@@ -53,9 +53,9 @@ void loop();
 
 Basic functions for MQTT communications.
 ```c++
-void publish(const String &topic, const String &payload, bool retain = false);
-void subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
-void unsubscribe(const String &topic);
+bool publish(const String &topic, const String &payload, bool retain = false);
+bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
+bool unsubscribe(const String &topic);
 ```
 
 Enable the display of usefull debugging messages that will output to serial.
@@ -76,9 +76,16 @@ Enable last will message. Must be set before the first loop() call.
 void enableLastWillMessage(const char* topic, const char* message, const bool retain = false);
 ```
 
-Return true if everything is connected.
+Connection status
 ```c++
-bool isConnected() 
+bool isConnected(); // Return true if everything is connected.
+bool isWifiConnected(); // Return true if WiFi is connected.
+bool isMqttConnected(); // Return true if MQTT is connected.
+```
+
+Return the number of time onConnectionEstablished has been called since the beginning. Can be useful if you need to monitor the number of times the connection has dropped.
+```c++
+void getConnectionEstablishedCount();
 ```
 
 As ESP8366 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
