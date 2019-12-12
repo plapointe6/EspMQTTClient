@@ -32,7 +32,7 @@
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
 typedef void(*ConnectionEstablishedCallback) ();
-typedef void(*MessageReceivedCallback) (const String &message);
+typedef void(*MessageReceivedCallback) (const String &topicStr, const String &message);
 typedef void(*DelayedExecutionCallback) ();
 
 class EspMQTTClient 
@@ -178,6 +178,7 @@ public:
 private:
   void connectToWifi();
   void connectToMqttBroker();
+  bool mqttTopicMatch(const String &topic1, const String &topic2);
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
 };
 

@@ -464,6 +464,43 @@ void EspMQTTClient::connectToMqttBroker()
   mLastMqttConnectionMillis = millis();
 }
 
+/**
+ * Matching MQTT topics, handling the eventual presence of a single wildcard character
+ *
+ * @param topic1 is the topic may contain a wildcard
+ * @param topic2 must not contain wildcards
+ * @return true on MQTT topic match, false otherwise
+ */
+bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2) {
+	//Serial.println(String("Comparing: ") + topic1 + " and " + topic2);
+	int i = 0;
+	if((i = topic1.indexOf('#')) >= 0) {
+		//Serial.print("# detected at position "); Serial.println(i);
+		String t1a = topic1.substring(0, i);
+		String t1b = topic1.substring(i+1);
+		//Serial.println(String("t1a: ") + t1a);
+		//Serial.println(String("t1b: ") + t1b);
+		if((t1a.length() == 0 || topic2.startsWith(t1a))&&
+		   (t1b.length() == 0 || topic2.endsWith(t1b)))
+		   return true;
+	} else if((i= topic1.indexOf('+')) >= 0) {
+		//Serial.print("+ detected at position "); Serial.println(i);
+		String t1a = topic1.substring(0, i);
+		String t1b = topic1.substring(i+1);
+		//Serial.println(String("t1a: ") + t1a);
+		//Serial.println(String("t1b: ") + t1b);
+		if((t1a.length() == 0 || topic2.startsWith(t1a))&&
+		   (t1b.length() == 0 || topic2.endsWith(t1b))) {
+			if(topic2.substring(t1a.length(), topic2.length()-t1b.length()).indexOf('/') == -1)
+				return true;
+		}
+
+	} else {
+		return topic1.equals(topic2);
+	}
+	return false;
+}
+
 void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length)
 {
   // Convert the payload into a String
@@ -483,6 +520,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   // Second, we add the string termination code at the end of the payload and we convert it to a String object
   payload[strTerminationPos] = '\0';
   String payloadStr((char*)payload);
+  String topicStr(topic);
 
   // Logging
   if (mEnableSerialLogs)
@@ -491,7 +529,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   // Send the message to subscribers
   for (byte i = 0 ; i < mTopicSubscriptionListSize ; i++)
   {
-    if (mTopicSubscriptionList[i].topic.equals(topic))
-      (*mTopicSubscriptionList[i].callback)(payloadStr); // Call the callback
+    if (mqttTopicMatch(mTopicSubscriptionList[i].topic, String(topic)))
+      (*mTopicSubscriptionList[i].callback)(topicStr, payloadStr); // Call the callback
   }
 }

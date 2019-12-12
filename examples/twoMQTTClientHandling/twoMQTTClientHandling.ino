@@ -39,8 +39,8 @@ void setup()
 // For client1
 void onConnectionEstablished()
 {
-  client1.subscribe("mytopic/test", [](const String & payload) {
-    Serial.println(payload);
+  client1.subscribe("mytopic/test", [](const String & topic, const String & payload) {
+    Serial.println(topic + ": " + payload);
   });
   client1.publish("mytopic/test", "This is a message from client1");
 }
@@ -48,8 +48,8 @@ void onConnectionEstablished()
 // For client2
 void onConnectionEstablishedClient2()
 {
-  client2.subscribe("mytopic/test", [](const String & payload) {
-    Serial.println(payload);
+  client2.subscribe("mytopic/test", [](const String & topic, const String & payload) {
+    Serial.println(topic + ": " + payload);
   });
   client2.publish("mytopic/test", "This is a message from client2");
 }
