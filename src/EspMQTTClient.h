@@ -162,6 +162,17 @@ public:
 
   // MQTT related
   bool publish(const String &topic, const String &payload, bool retain = false);
+
+  bool publish(const String &topic, bool value           , bool retain = false);
+  bool publish(const String &topic, byte value           , bool retain = false);
+  bool publish(const String &topic, char value           , bool retain = false);
+  bool publish(const String &topic, word value           , bool retain = false);
+  bool publish(const String &topic, unsigned int value   , bool retain = false);
+  bool publish(const String &topic, int value            , bool retain = false);
+  bool publish(const String &topic, unsigned long value  , bool retain = false);
+  bool publish(const String &topic, long value           , bool retain = false);
+  bool publish(const String &topic, float value          , bool retain = false);
+
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
 

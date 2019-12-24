@@ -298,6 +298,51 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
   return success;
 }
 
+bool EspMQTTClient::publish(const String &topic, bool value, bool retain)
+{
+  return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, byte value, bool retain)
+{
+  return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, char value, bool retain)
+{
+  return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, word value, bool retain)
+{
+  return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, unsigned int value, bool retain)
+{
+  return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, int value, bool retain) 
+{
+ return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, unsigned long value, bool retain)
+{
+ return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, long value, bool retain)
+{
+ return publish(topic, String(value), retain);
+}
+
+bool EspMQTTClient::publish(const String &topic, float value, bool retain)
+{
+ return publish(topic, String(value), retain);
+}
+
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
   // Check the possibility to add a new topic
