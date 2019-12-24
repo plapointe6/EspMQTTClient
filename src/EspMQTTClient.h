@@ -172,9 +172,14 @@ public:
   bool publish(const String &topic, unsigned long value  , bool retain = false);
   bool publish(const String &topic, long value           , bool retain = false);
   bool publish(const String &topic, float value          , bool retain = false);
+  bool publish(const String &topic, short value          , bool retain = false);
 
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+
+  const char * getMqttClientName(void);
+  const char * getMqttServerIp(void);
+  const short getMqttPort(void);
 
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);

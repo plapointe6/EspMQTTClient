@@ -343,6 +343,11 @@ bool EspMQTTClient::publish(const String &topic, float value, bool retain)
  return publish(topic, String(value), retain);
 }
 
+bool EspMQTTClient::publish(const String &topic, short value, bool retain)
+{
+ return publish(topic, String(value), retain);
+}
+
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
   // Check the possibility to add a new topic
@@ -419,6 +424,18 @@ bool EspMQTTClient::unsubscribe(const String &topic)
     Serial.println("MQTT! Topic cannot be found to unsubscribe, ignored.");
 
   return success;
+}
+
+const char * EspMQTTClient::getMqttClientName(void) {
+  return mMqttClientName;
+}
+
+const char * EspMQTTClient::getMqttServerIp(void) {
+  return mMqttServerIp;
+}
+
+const short EspMQTTClient::getMqttPort(void) {
+  return mMqttServerPort;
 }
 
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
