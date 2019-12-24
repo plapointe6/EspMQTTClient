@@ -163,6 +163,8 @@ public:
   // MQTT related
   bool publish(const String &topic, const String &payload, bool retain = false);
 
+  bool publish(const String &topic, char * value         , bool retain = false);
+  bool publish(const String &topic, const char * value   , bool retain = false);
   bool publish(const String &topic, bool value           , bool retain = false);
   bool publish(const String &topic, byte value           , bool retain = false);
   bool publish(const String &topic, char value           , bool retain = false);
