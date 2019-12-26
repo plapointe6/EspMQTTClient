@@ -485,7 +485,7 @@ void EspMQTTClient::connectToWifi()
 void EspMQTTClient::connectToMqttBroker()
 {
   if (mEnableSerialLogs)
-    Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
+    Serial.printf("MQTT: Connecting to broker @%s with client name \"%s\"", mMqttServerIp, mMqttClientName);
 
   if (mMqttClient.connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession))
   {
