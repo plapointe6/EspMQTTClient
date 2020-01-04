@@ -285,7 +285,7 @@ void EspMQTTClient::loop()
 
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
-  bool success = mMqttClient.publish_P(topic.c_str(), payload.c_str(), retain);
+  bool success = mMqttClient.publish(topic.c_str(), payload.c_str(), retain);
 
   if (mEnableSerialLogs) 
   {
