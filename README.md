@@ -129,7 +129,11 @@ void setup() {}
 
 void onConnectionEstablished() {
 
-  client.subscribe("mytopic/test", [] (const String &topic, const String &payload)  {
+  client.subscribe("mytopic/test", [] (const String &payload)  {
+    Serial.println(payload);
+  });
+
+  client.subscribe("mytopic/wildcardtest/#", [] (const String &topic, const String &payload)  {
     Serial.println(topic + ": " + payload);
   });
 

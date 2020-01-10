@@ -32,7 +32,12 @@ void setup()
 void onConnectionEstablished()
 {
   // Subscribe to "mytopic/test" and display received message to Serial
-  client.subscribe("mytopic/test", [](const String & topic, const String & payload) {
+  client.subscribe("mytopic/test", [](const String & payload) {
+    Serial.println(payload);
+  });
+
+  // Subscribe to "mytopic/wildcardtest/#" and display received message to Serial
+  client.subscribe("mytopic/wildcardtest/#", [](const String & topic, const String & payload) {
     Serial.println(topic + ": " + payload);
   });
 

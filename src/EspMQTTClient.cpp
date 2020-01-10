@@ -324,7 +324,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   bool success = mMqttClient.subscribe(topic.c_str());
 
   if(success)
-    mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback };
+    mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback, NULL };
   
   if (mEnableSerialLogs)
   {
@@ -335,6 +335,16 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   }
 
   return success;
+}
+
+bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback)
+{
+  if(subscribe(topic, (MessageReceivedCallback)NULL))
+  {
+    mTopicSubscriptionList[mTopicSubscriptionListSize-1].callbackWithTopic = messageReceivedCallback;
+    return true;
+  }
+  return false;
 }
 
 bool EspMQTTClient::unsubscribe(const String &topic)
@@ -530,6 +540,11 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   for (byte i = 0 ; i < mTopicSubscriptionListSize ; i++)
   {
     if (mqttTopicMatch(mTopicSubscriptionList[i].topic, String(topic)))
-      (*mTopicSubscriptionList[i].callback)(topicStr, payloadStr); // Call the callback
+    {
+      if(mTopicSubscriptionList[i].callback != NULL)
+        (*mTopicSubscriptionList[i].callback)(payloadStr); // Call the callback
+      if(mTopicSubscriptionList[i].callbackWithTopic != NULL)
+        (*mTopicSubscriptionList[i].callbackWithTopic)(topicStr, payloadStr); // Call the callback
+    }
   }
 }
