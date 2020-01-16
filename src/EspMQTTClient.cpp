@@ -542,9 +542,9 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
     if (mqttTopicMatch(mTopicSubscriptionList[i].topic, String(topic)))
     {
       if(mTopicSubscriptionList[i].callback != NULL)
-        (*mTopicSubscriptionList[i].callback)(payloadStr); // Call the callback
+        (mTopicSubscriptionList[i].callback)(payloadStr); // Call the callback
       if(mTopicSubscriptionList[i].callbackWithTopic != NULL)
-        (*mTopicSubscriptionList[i].callbackWithTopic)(topicStr, payloadStr); // Call the callback
+        (mTopicSubscriptionList[i].callbackWithTopic)(topicStr, payloadStr); // Call the callback
     }
   }
 }

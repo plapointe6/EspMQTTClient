@@ -32,7 +32,7 @@
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
 typedef void(*ConnectionEstablishedCallback) ();
-typedef void(*MessageReceivedCallback) (const String &message);
+typedef std::function<void(const String &message)> MessageReceivedCallback;
 typedef void(*MessageReceivedCallbackWithTopic) (const String &topicStr, const String &message);
 typedef void(*DelayedExecutionCallback) ();
 
