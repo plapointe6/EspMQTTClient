@@ -33,6 +33,7 @@ void onConnectionEstablished(); // MUST be implemented in your sketch. Called on
 
 typedef void(*ConnectionEstablishedCallback) ();
 typedef void(*MessageReceivedCallback) (const String &message);
+typedef void(*MessageReceivedCallbackWithTopic) (const String &topicStr, const String &message);
 typedef void(*DelayedExecutionCallback) ();
 
 class EspMQTTClient 
@@ -64,6 +65,7 @@ private:
   struct TopicSubscriptionRecord {
     String topic;
     MessageReceivedCallback callback;
+    MessageReceivedCallbackWithTopic callbackWithTopic;
   };
   TopicSubscriptionRecord mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
   byte mTopicSubscriptionListSize;
@@ -163,6 +165,7 @@ public:
   // MQTT related
   bool publish(const String &topic, const String &payload, bool retain = false);
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
+  bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
 
   // Other
@@ -178,6 +181,7 @@ public:
 private:
   void connectToWifi();
   void connectToMqttBroker();
+  bool mqttTopicMatch(const String &topic1, const String &topic2);
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
 };
 
