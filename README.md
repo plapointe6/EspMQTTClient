@@ -133,10 +133,6 @@ void onConnectionEstablished() {
     Serial.println(payload);
   });
 
-  client.subscribe("mytopic/wildcardtest/#", [] (const String &topic, const String &payload)  {
-    Serial.println(topic + ": " + payload);
-  });
-
   client.publish("mytopic/test", "This is a message");
 }
 

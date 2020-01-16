@@ -6,16 +6,12 @@
     {
       "name": "Patrick Lapointe",
       "maintainer": true
-    },
-    {
-      "name": "Szilárd Greszler",
-      "maintainer": true
     }
   ],
   "repository":
   {
     "type": "git",
-    "url": "https://github.com/dralisz82/EspMQTTClient.git"
+    "url": "https://github.com/plapointe6/EspMQTTClient.git"
   },
   "version": "1.8.0",
   "frameworks": "arduino",
