@@ -29,6 +29,11 @@
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
 #define CONNECTION_RETRY_DELAY 10 * 1000
 
+#define WIFI_FIX
+#ifdef WIFI_FIX
+#pragma message "Using NEW connection algorithm V 1/23/20 @ 10:45"
+#endif
+
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
 typedef void(*ConnectionEstablishedCallback) ();
@@ -39,10 +44,25 @@ typedef void(*DelayedExecutionCallback) ();
 class EspMQTTClient 
 {
 private:
+#ifdef WIFI_FIX
+  // mConnState values
+  // status |   WiFi   |    MQTT
+  // -------+----------+------------
+  //      0 |   down   |    down
+  //      1 | starting |    down
+  //      2 |    up    |    down
+  //      3 |    up    |  starting
+  //      4 |    up    | finalising
+  //      5 |    up    |     up
+  uint8_t mConnState; // connection state (1-5)
+  unsigned int mWaitCount;
+  unsigned int mBrokerConnectPauseMills; // minimum time (mills) allowed between calls to mMqttClient.connect
   // Wifi related
+#else
   bool mWifiConnected;
   unsigned long mLastWifiConnectionAttemptMillis;
   unsigned long mLastWifiConnectionSuccessMillis;
+#endif
   const char* mWifiSsid;
   const char* mWifiPassword;
   WiFiClient mWifiClient;
@@ -154,6 +174,9 @@ public:
 
   // Optional functionality
   void enableDebuggingMessages(const bool enabled = true); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
+#ifdef WIFI_FIX
+  void brokerConnectPause(unsigned int mills); // set minimum time (mills) allowed between calls to mMqttClient.connect 
+#endif
   void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
   void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to mMqttUsername and mMqttPassword
   void enableMQTTPersistence(); // Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
@@ -170,10 +193,15 @@ public:
 
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
-
+#ifdef WIFI_FIX
+  bool isConnected(); // Return true if everything is connected
+  bool isWifiConnected() ; // Return true if wifi is connected
+  bool isMqttConnected(); // Return true if mqtt is connected
+#else
   inline bool isConnected() const { return isWifiConnected() && isMqttConnected(); }; // Return true if everything is connected
   inline bool isWifiConnected() const { return mWifiConnected; }; // Return true if wifi is connected
   inline bool isMqttConnected() const { return mMqttConnected; }; // Return true if mqtt is connected
+#endif
   inline bool getConnectionEstablishedCount() const { return mConnectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
 
   inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { mConnectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
@@ -183,6 +211,9 @@ private:
   void connectToMqttBroker();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
+#ifdef WIFI_FIX
+  void configureHTTPWebUpdater(); // Worker method to configure web updater. 
+#endif
 };
 
 #endif
