@@ -34,7 +34,7 @@ void onConnectionEstablished(); // MUST be implemented in your sketch. Called on
 typedef std::function<void()> ConnectionEstablishedCallback;
 typedef std::function<void(const String &message)> MessageReceivedCallback;
 typedef std::function<void(const String &topicStr, const String &message)> MessageReceivedCallbackWithTopic;
-typedef void(*DelayedExecutionCallback) ();
+typedef std::function<void()> DelayedExecutionCallback;
 
 class EspMQTTClient 
 {
