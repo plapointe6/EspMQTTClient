@@ -19,6 +19,39 @@ The MQTT communication depends on the PubSubClient Library (https://github.com/k
 From PubSubClient:
 "The maximum message size, including header, is 128 bytes by default. This is configurable via `MQTT_MAX_PACKET_SIZE` in `PubSubClient.h`"
 
+## Example
+
+```c++
+#include "EspMQTTClient.h"
+
+EspMQTTClient client(
+  "WifiSSID",
+  "WifiPassword",
+  "192.168.1.100",  // MQTT Broker server ip
+  "MQTTUsername",   // Can be omitted if not needed
+  "MQTTPassword",   // Can be omitted if not needed
+  "TestClient"      // Client name that uniquely identify your device
+);
+
+void setup() {}
+
+void onConnectionEstablished() {
+
+  client.subscribe("mytopic/test", [] (const String &payload)  {
+    Serial.println(payload);
+  });
+
+  client.publish("mytopic/test", "This is a message");
+}
+
+void loop() {
+  client.loop();
+}
+```
+
+See "SimpleMQTTClient.ino" for the complete example.
+
+
 ## Documentation
 
 ### Construction
@@ -111,34 +144,3 @@ void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback);
 ```
 See exemple "twoMQTTClientHandling.ino" for more details.
 
-## Example
-
-```c++
-#include "EspMQTTClient.h"
-
-EspMQTTClient client(
-  "WifiSSID",
-  "WifiPassword",
-  "192.168.1.100",  // MQTT Broker server ip
-  "MQTTUsername",   // Can be omitted if not needed
-  "MQTTPassword",   // Can be omitted if not needed
-  "TestClient"      // Client name that uniquely identify your device
-);
-
-void setup() {}
-
-void onConnectionEstablished() {
-
-  client.subscribe("mytopic/test", [] (const String &payload)  {
-    Serial.println(payload);
-  });
-
-  client.publish("mytopic/test", "This is a message");
-}
-
-void loop() {
-  client.loop();
-}
-```
-
-See "SimpleMQTTClient.ino" for the complete example.
