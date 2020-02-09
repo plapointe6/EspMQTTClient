@@ -265,7 +265,7 @@ void EspMQTTClient::loop()
     {
       if (mDelayedExecutionList[i].targetMillis <= currentMillis)
       {
-        (*mDelayedExecutionList[i].callback)();
+        mDelayedExecutionList[i].callback();
         for(byte j = i ; j < mDelayedExecutionListSize-1 ; j++)
           mDelayedExecutionList[j] = mDelayedExecutionList[j + 1];
         mDelayedExecutionListSize--;
