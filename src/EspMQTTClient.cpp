@@ -433,7 +433,7 @@ void EspMQTTClient::connectToMqttBroker()
       Serial.println("ok.");
 
     mConnectionEstablishedCount++;
-    (*mConnectionEstablishedCallback)();
+    mConnectionEstablishedCallback();
   }
   else if (mEnableSerialLogs)
   {
