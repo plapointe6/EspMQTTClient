@@ -481,34 +481,36 @@ void EspMQTTClient::connectToMqttBroker()
  * @param topic2 must not contain wildcards
  * @return true on MQTT topic match, false otherwise
  */
-bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2) {
-	//Serial.println(String("Comparing: ") + topic1 + " and " + topic2);
-	int i = 0;
-	if((i = topic1.indexOf('#')) >= 0) {
-		//Serial.print("# detected at position "); Serial.println(i);
-		String t1a = topic1.substring(0, i);
-		String t1b = topic1.substring(i+1);
-		//Serial.println(String("t1a: ") + t1a);
-		//Serial.println(String("t1b: ") + t1b);
-		if((t1a.length() == 0 || topic2.startsWith(t1a))&&
-		   (t1b.length() == 0 || topic2.endsWith(t1b)))
-		   return true;
-	} else if((i= topic1.indexOf('+')) >= 0) {
-		//Serial.print("+ detected at position "); Serial.println(i);
-		String t1a = topic1.substring(0, i);
-		String t1b = topic1.substring(i+1);
-		//Serial.println(String("t1a: ") + t1a);
-		//Serial.println(String("t1b: ") + t1b);
-		if((t1a.length() == 0 || topic2.startsWith(t1a))&&
-		   (t1b.length() == 0 || topic2.endsWith(t1b))) {
-			if(topic2.substring(t1a.length(), topic2.length()-t1b.length()).indexOf('/') == -1)
-				return true;
-		}
+bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2) 
+{
+  int i = 0;
 
-	} else {
-		return topic1.equals(topic2);
-	}
-	return false;
+  if((i = topic1.indexOf('#')) >= 0) 
+  {
+    String t1a = topic1.substring(0, i);
+    String t1b = topic1.substring(i+1);
+    if((t1a.length() == 0 || topic2.startsWith(t1a)) &&
+       (t1b.length() == 0 || topic2.endsWith(t1b)))
+      return true;
+  } 
+  else if((i = topic1.indexOf('+')) >= 0) 
+  {
+    String t1a = topic1.substring(0, i);
+    String t1b = topic1.substring(i+1);
+
+    if((t1a.length() == 0 || topic2.startsWith(t1a))&&
+       (t1b.length() == 0 || topic2.endsWith(t1b))) 
+    {
+      if(topic2.substring(t1a.length(), topic2.length()-t1b.length()).indexOf('/') == -1)
+        return true;
+    }
+  } 
+  else 
+  {
+    return topic1.equals(topic2);
+  }
+
+  return false;
 }
 
 void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length)
