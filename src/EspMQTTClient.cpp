@@ -107,7 +107,7 @@ EspMQTTClient::EspMQTTClient(
   // MQTT client
   mTopicSubscriptionListSize = 0;
   mMqttConnected = false;
-  mLastMqttConnectionMillis = 0;
+  mLastMqttConnectionAttemptMillis = 0;
   mMqttLastWillTopic = 0;
   mMqttLastWillMessage = 0;
   mMqttLastWillRetain = false;
@@ -186,55 +186,27 @@ void EspMQTTClient::loop()
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    // If we just being connected to wifi
     if (!mWifiConnected)
-    {
-      if (mEnableSerialLogs)
-        Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
+      onWiFiConnectionEstablished();
 
-      mLastWifiConnectionSuccessMillis = currentMillis;
-      
-      // Config of web updater
-      if (mHttpServer != NULL)
-      {
-        MDNS.begin(mMqttClientName);
-        mHttpUpdater->setup(mHttpServer, mUpdateServerAddress, mUpdateServerUsername, mUpdateServerPassword);
-        mHttpServer->begin();
-        MDNS.addService("http", "tcp", 80);
-      
-        if (mEnableSerialLogs)
-          Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", mMqttClientName, mUpdateServerUsername, mUpdateServerPassword);
-      }
-  
-      mWifiConnected = true;
-    }
-    
     // MQTT handling
     if (mMqttClient.connected())
+    {
       mMqttClient.loop();
+    }
     else
     {
       if (mMqttConnected)
-      {
-        if (mEnableSerialLogs)
-          Serial.println("MQTT! Lost connection.");
-        
-        mTopicSubscriptionListSize = 0;
-        mMqttConnected = false;
-      }
-      
-      if (currentMillis - mLastMqttConnectionMillis > CONNECTION_RETRY_DELAY || mLastMqttConnectionMillis == 0)
+        onMQTTConnectionLost();
+
+      if (currentMillis - mLastMqttConnectionAttemptMillis > CONNECTION_RETRY_DELAY || mLastMqttConnectionAttemptMillis == 0)
       {
         bool success = connectToMqttBroker();
 
         if(success)
-        {
-          mMqttConnected = true;
-          mConnectionEstablishedCount++;
-          mConnectionEstablishedCallback();
-        }
+          onMQTTConnectionEstablished();
 
-        mLastMqttConnectionMillis = millis();
+        mLastMqttConnectionAttemptMillis = millis();
       }
     }
       
@@ -250,18 +222,9 @@ void EspMQTTClient::loop()
   }
   else // If we are not connected to wifi
   {
-    if (mWifiConnected) 
-    {
-      if (mEnableSerialLogs)
-        Serial.println("WiFi! Lost connection.");
-      
-      mWifiConnected = false;
+    if (mWifiConnected)
+      onWiFiConnectionLost();
 
-      // If we handle wifi, we force disconnection to clear the last connection
-      if (mWifiSsid != NULL)
-        WiFi.disconnect();
-    }
-    
     // We retry to connect to the wifi if we handle it and there was no attempt since the last connection lost
     if (mWifiSsid != NULL && (mLastWifiConnectionAttemptMillis == 0 || mLastWifiConnectionSuccessMillis > mLastWifiConnectionAttemptMillis))
     {
@@ -294,7 +257,6 @@ void EspMQTTClient::loop()
     mShowLegacyConstructorWarning = false;
     Serial.print("SYS! You are using a constructor that will be deleted soon, please update your code with the new construction format.\n");
   }
-
 }
 
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
@@ -418,6 +380,55 @@ void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCa
 
 // ================== Private functions ====================-
 
+void EspMQTTClient::onWiFiConnectionEstablished()
+{
+    if (mEnableSerialLogs)
+      Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
+
+    mLastWifiConnectionSuccessMillis = millis();
+    
+    // Config of web updater
+    if (mHttpServer != NULL)
+    {
+      MDNS.begin(mMqttClientName);
+      mHttpUpdater->setup(mHttpServer, mUpdateServerAddress, mUpdateServerUsername, mUpdateServerPassword);
+      mHttpServer->begin();
+      MDNS.addService("http", "tcp", 80);
+    
+      if (mEnableSerialLogs)
+        Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", mMqttClientName, mUpdateServerUsername, mUpdateServerPassword);
+    }
+
+    mWifiConnected = true;
+}
+
+void EspMQTTClient::onWiFiConnectionLost()
+{
+  if (mEnableSerialLogs)
+    Serial.println("WiFi! Lost connection.");
+
+  // If we handle wifi, we force disconnection to clear the last connection
+  if (mWifiSsid != NULL)
+    WiFi.disconnect();
+
+  mWifiConnected = false;
+}
+
+void EspMQTTClient::onMQTTConnectionEstablished()
+{
+  mMqttConnected = true;
+  mConnectionEstablishedCount++;
+  mConnectionEstablishedCallback();
+}
+
+void EspMQTTClient::onMQTTConnectionLost()
+{
+  if (mEnableSerialLogs)
+    Serial.println("MQTT! Lost connection.");
+
+  mTopicSubscriptionListSize = 0;
+  mMqttConnected = false;
+}
 
 // Initiate a Wifi connection (non-blocking)
 void EspMQTTClient::connectToWifi()

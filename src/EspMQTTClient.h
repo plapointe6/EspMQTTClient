@@ -49,7 +49,7 @@ private:
 
   // MQTT related
   bool mMqttConnected;
-  unsigned long mLastMqttConnectionMillis;
+  unsigned long mLastMqttConnectionAttemptMillis;
   const char* mMqttServerIp;
   const char* mMqttUsername;
   const char* mMqttPassword;
@@ -179,6 +179,10 @@ public:
   inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { mConnectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
 
 private:
+  void onWiFiConnectionEstablished();
+  void onWiFiConnectionLost();
+  void onMQTTConnectionEstablished();
+  void onMQTTConnectionLost();
   void connectToWifi();
   bool connectToMqttBroker();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
