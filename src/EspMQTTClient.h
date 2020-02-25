@@ -180,7 +180,7 @@ public:
 
 private:
   void connectToWifi();
-  void connectToMqttBroker();
+  bool connectToMqttBroker();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
 };

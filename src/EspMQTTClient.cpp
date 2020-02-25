@@ -192,7 +192,7 @@ void EspMQTTClient::loop()
       if (mEnableSerialLogs)
         Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
 
-      mLastWifiConnectionSuccessMillis = millis();
+      mLastWifiConnectionSuccessMillis = currentMillis;
       
       // Config of web updater
       if (mHttpServer != NULL)
@@ -224,7 +224,18 @@ void EspMQTTClient::loop()
       }
       
       if (currentMillis - mLastMqttConnectionMillis > CONNECTION_RETRY_DELAY || mLastMqttConnectionMillis == 0)
-        connectToMqttBroker();
+      {
+        bool success = connectToMqttBroker();
+
+        if(success)
+        {
+          mMqttConnected = true;
+          mConnectionEstablishedCount++;
+          mConnectionEstablishedCallback();
+        }
+
+        mLastMqttConnectionMillis = millis();
+      }
     }
       
     // Web updater handling
@@ -253,7 +264,10 @@ void EspMQTTClient::loop()
     
     // We retry to connect to the wifi if we handle it and there was no attempt since the last connection lost
     if (mWifiSsid != NULL && (mLastWifiConnectionAttemptMillis == 0 || mLastWifiConnectionSuccessMillis > mLastWifiConnectionAttemptMillis))
+    {
       connectToWifi();
+      mLastWifiConnectionAttemptMillis = millis();
+    }
   }
   
   // Delayed execution handling
@@ -404,6 +418,8 @@ void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCa
 
 // ================== Private functions ====================-
 
+
+// Initiate a Wifi connection (non-blocking)
 void EspMQTTClient::connectToWifi()
 {
   WiFi.mode(WIFI_STA);
@@ -416,62 +432,58 @@ void EspMQTTClient::connectToWifi()
 
   if (mEnableSerialLogs)
     Serial.printf("\nWiFi: Connecting to %s ... \n", mWifiSsid);
-  
-  mLastWifiConnectionAttemptMillis = millis();
 }
 
-void EspMQTTClient::connectToMqttBroker()
+// Try to connect to the MQTT broker and return True if the connection is successfull (blocking)
+bool EspMQTTClient::connectToMqttBroker()
 {
   if (mEnableSerialLogs)
     Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
 
-  if (mMqttClient.connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession))
+  bool success = mMqttClient.connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession);
+
+  if (mEnableSerialLogs)
   {
-    mMqttConnected = true;
-    
-    if (mEnableSerialLogs) 
+    if (success) 
       Serial.println("ok.");
-
-    mConnectionEstablishedCount++;
-    mConnectionEstablishedCallback();
-  }
-  else if (mEnableSerialLogs)
-  {
-    Serial.print("unable to connect, ");
-
-    switch (mMqttClient.state())
+    else
     {
-      case -4:
-        Serial.println("MQTT_CONNECTION_TIMEOUT");
-        break;
-      case -3:
-        Serial.println("MQTT_CONNECTION_LOST");
-        break;
-      case -2:
-        Serial.println("MQTT_CONNECT_FAILED");
-        break;
-      case -1:
-        Serial.println("MQTT_DISCONNECTED");
-        break;
-      case 1:
-        Serial.println("MQTT_CONNECT_BAD_PROTOCOL");
-        break;
-      case 2:
-        Serial.println("MQTT_CONNECT_BAD_CLIENT_ID");
-        break;
-      case 3:
-        Serial.println("MQTT_CONNECT_UNAVAILABLE");
-        break;
-      case 4:
-        Serial.println("MQTT_CONNECT_BAD_CREDENTIALS");
-        break;
-      case 5:
-        Serial.println("MQTT_CONNECT_UNAUTHORIZED");
-        break;
+      Serial.print("unable to connect, ");
+
+      switch (mMqttClient.state())
+      {
+        case -4:
+          Serial.println("MQTT_CONNECTION_TIMEOUT");
+          break;
+        case -3:
+          Serial.println("MQTT_CONNECTION_LOST");
+          break;
+        case -2:
+          Serial.println("MQTT_CONNECT_FAILED");
+          break;
+        case -1:
+          Serial.println("MQTT_DISCONNECTED");
+          break;
+        case 1:
+          Serial.println("MQTT_CONNECT_BAD_PROTOCOL");
+          break;
+        case 2:
+          Serial.println("MQTT_CONNECT_BAD_CLIENT_ID");
+          break;
+        case 3:
+          Serial.println("MQTT_CONNECT_UNAVAILABLE");
+          break;
+        case 4:
+          Serial.println("MQTT_CONNECT_BAD_CREDENTIALS");
+          break;
+        case 5:
+          Serial.println("MQTT_CONNECT_UNAUTHORIZED");
+          break;
+      }
     }
   }
-  
-  mLastMqttConnectionMillis = millis();
+
+  return success;
 }
 
 /**
