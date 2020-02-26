@@ -127,7 +127,7 @@ void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message
 }
 
 
-// =============== Public functions =================
+// =============== Main loop / connection state handling =================
 
 void EspMQTTClient::loop()
 {
@@ -181,25 +181,62 @@ void EspMQTTClient::loop()
       _lastWifiConnectionAttemptMillis = millis();
     }
   }
-  
-  // Delayed execution handling
-  if (_delayedExecutionListSize > 0)
-  {
-    unsigned long currentMillis = millis();
 
-    for(byte i = 0 ; i < _delayedExecutionListSize ; i++)
-    {
-      if (_delayedExecutionList[i].targetMillis <= currentMillis)
-      {
-        _delayedExecutionList[i].callback();
-        for(byte j = i ; j < _delayedExecutionListSize-1 ; j++)
-          _delayedExecutionList[j] = _delayedExecutionList[j + 1];
-        _delayedExecutionListSize--;
-        i--;
-      }
-    }
-  }
+  processDelayedExecutionRequests();
 }
+
+void EspMQTTClient::onWiFiConnectionEstablished()
+{
+    if (_enableSerialLogs)
+      Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
+
+    _lastWifiConnectionSuccessMillis = millis();
+    
+    // Config of web updater
+    if (_httpServer != NULL)
+    {
+      MDNS.begin(_mqttClientName);
+      _httpUpdater->setup(_httpServer, _updateServerAddress, _updateServerUsername, _updateServerPassword);
+      _httpServer->begin();
+      MDNS.addService("http", "tcp", 80);
+    
+      if (_enableSerialLogs)
+        Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
+    }
+
+    _wifiConnected = true;
+}
+
+void EspMQTTClient::onWiFiConnectionLost()
+{
+  if (_enableSerialLogs)
+    Serial.println("WiFi! Lost connection.");
+
+  // If we handle wifi, we force disconnection to clear the last connection
+  if (_wifiSsid != NULL)
+    WiFi.disconnect();
+
+  _wifiConnected = false;
+}
+
+void EspMQTTClient::onMQTTConnectionEstablished()
+{
+  _mqttConnected = true;
+  _connectionEstablishedCount++;
+  _connectionEstablishedCallback();
+}
+
+void EspMQTTClient::onMQTTConnectionLost()
+{
+  if (_enableSerialLogs)
+    Serial.println("MQTT! Lost connection.");
+
+  _topicSubscriptionListSize = 0;
+  _mqttConnected = false;
+}
+
+
+// =============== Public functions for interaction with thus lib =================
 
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
@@ -322,56 +359,6 @@ void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCa
 
 // ================== Private functions ====================-
 
-void EspMQTTClient::onWiFiConnectionEstablished()
-{
-    if (_enableSerialLogs)
-      Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
-
-    _lastWifiConnectionSuccessMillis = millis();
-    
-    // Config of web updater
-    if (_httpServer != NULL)
-    {
-      MDNS.begin(_mqttClientName);
-      _httpUpdater->setup(_httpServer, _updateServerAddress, _updateServerUsername, _updateServerPassword);
-      _httpServer->begin();
-      MDNS.addService("http", "tcp", 80);
-    
-      if (_enableSerialLogs)
-        Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
-    }
-
-    _wifiConnected = true;
-}
-
-void EspMQTTClient::onWiFiConnectionLost()
-{
-  if (_enableSerialLogs)
-    Serial.println("WiFi! Lost connection.");
-
-  // If we handle wifi, we force disconnection to clear the last connection
-  if (_wifiSsid != NULL)
-    WiFi.disconnect();
-
-  _wifiConnected = false;
-}
-
-void EspMQTTClient::onMQTTConnectionEstablished()
-{
-  _mqttConnected = true;
-  _connectionEstablishedCount++;
-  _connectionEstablishedCallback();
-}
-
-void EspMQTTClient::onMQTTConnectionLost()
-{
-  if (_enableSerialLogs)
-    Serial.println("MQTT! Lost connection.");
-
-  _topicSubscriptionListSize = 0;
-  _mqttConnected = false;
-}
-
 // Initiate a Wifi connection (non-blocking)
 void EspMQTTClient::connectToWifi()
 {
@@ -437,6 +424,28 @@ bool EspMQTTClient::connectToMqttBroker()
   }
 
   return success;
+}
+
+// Delayed execution handling. 
+// Check if there is delayed execution requests to process and execute them if needed.
+void EspMQTTClient::processDelayedExecutionRequests()
+{
+  if (_delayedExecutionListSize > 0)
+  {
+    unsigned long currentMillis = millis();
+
+    for(byte i = 0 ; i < _delayedExecutionListSize ; i++)
+    {
+      if (_delayedExecutionList[i].targetMillis <= currentMillis)
+      {
+        _delayedExecutionList[i].callback();
+        for(byte j = i ; j < _delayedExecutionListSize-1 ; j++)
+          _delayedExecutionList[j] = _delayedExecutionList[j + 1];
+        _delayedExecutionListSize--;
+        i--;
+      }
+    }
+  }
 }
 
 /**
