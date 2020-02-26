@@ -11,6 +11,7 @@ EspMQTTClient::EspMQTTClient(
   EspMQTTClient(NULL, NULL, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
 {
 }
+
 EspMQTTClient::EspMQTTClient(
   const char* mqttServerIp,
   const short mqttServerPort,
@@ -131,34 +132,29 @@ void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message
 
 void EspMQTTClient::loop()
 {
-  unsigned long currentMillis = millis();
+  // Delayed execution requests handling
+  processDelayedExecutionRequests();
 
-  if (WiFi.status() == WL_CONNECTED)
+  // WIFI connection state handling
+
+  bool isWifiConnected = (WiFi.status() == WL_CONNECTED);
+
+  // A connection to wifi has just been established
+  if (isWifiConnected && !_wifiConnected)
   {
-    if (!_wifiConnected)
-      onWiFiConnectionEstablished();
+    onWiFiConnectionEstablished();
+    _lastWifiConnectionSuccessMillis = millis();
+  }
 
-    // MQTT handling
-    if (_mqttClient.connected())
-    {
-      _mqttClient.loop();
-    }
-    else
-    {
-      if (_mqttConnected)
-        onMQTTConnectionLost();
+  // The connection to wifi has just been lost
+  else if (!isWifiConnected && _wifiConnected)
+  {
+    onWiFiConnectionLost();
+  }
 
-      if (currentMillis - _lastMqttConnectionAttemptMillis > CONNECTION_RETRY_DELAY || _lastMqttConnectionAttemptMillis == 0)
-      {
-        bool success = connectToMqttBroker();
-
-        if(success)
-          onMQTTConnectionEstablished();
-
-        _lastMqttConnectionAttemptMillis = millis();
-      }
-    }
-      
+  // We are connected to wifi since at least one loop() call
+  else if (isWifiConnected && _wifiConnected)
+  {
     // Web updater handling
     if (_httpServer != NULL)
     {
@@ -167,14 +163,13 @@ void EspMQTTClient::loop()
         MDNS.update(); // We need to do this only for ESP8266
       #endif
     }
-      
   }
-  else // If we are not connected to wifi
-  {
-    if (_wifiConnected)
-      onWiFiConnectionLost();
 
-    // We retry to connect to the wifi if we handle it and there was no attempt since the last connection lost
+  // We are disconnected to wifi since at least one loop() call
+  else
+  {
+    // We retry to connect to the wifi if we handle the reconnection to it 
+    // and if there was no attempt since the last connection lost
     if (_wifiSsid != NULL && (_lastWifiConnectionAttemptMillis == 0 || _lastWifiConnectionSuccessMillis > _lastWifiConnectionAttemptMillis))
     {
       connectToWifi();
@@ -182,7 +177,48 @@ void EspMQTTClient::loop()
     }
   }
 
-  processDelayedExecutionRequests();
+  // If there is a change in the wifi connection state, don't handle the mqtt connection state right away.
+  // This prevent the library from doing too much thing in the same loop() call.
+  if (isWifiConnected != _wifiConnected)
+  {
+    _wifiConnected = isWifiConnected;
+    return;
+  }
+
+
+  // MQTT Connection state handling
+
+  bool isMqttConnected = isWifiConnected && _mqttClient.connected();
+  
+  // A connection to MQTT has just been established
+  if (isMqttConnected && !_mqttConnected)
+  {
+    onMQTTConnectionEstablished();
+  }
+
+  // A connection to MQTT has just been lost
+  else if (!isMqttConnected && _mqttConnected)
+  {
+    onMQTTConnectionLost();
+  }
+
+  // We are connected to MQTT since at least one loop() call
+  else if (isMqttConnected && _mqttConnected)
+  {
+    _mqttClient.loop();
+  }
+
+  // We are not connected to MQTT since at least one loop() call, but we are connected to WIFI
+  else if (isWifiConnected)
+  {
+    if (millis() - _lastMqttConnectionAttemptMillis > MQTT_CONNECTION_RETRY_DELAY || _lastMqttConnectionAttemptMillis == 0)
+    {
+      connectToMqttBroker();
+      _lastMqttConnectionAttemptMillis = millis();
+    }
+  }
+
+  _mqttConnected = isMqttConnected;
 }
 
 void EspMQTTClient::onWiFiConnectionEstablished()
@@ -190,8 +226,6 @@ void EspMQTTClient::onWiFiConnectionEstablished()
     if (_enableSerialLogs)
       Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
 
-    _lastWifiConnectionSuccessMillis = millis();
-    
     // Config of web updater
     if (_httpServer != NULL)
     {
@@ -203,8 +237,6 @@ void EspMQTTClient::onWiFiConnectionEstablished()
       if (_enableSerialLogs)
         Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
     }
-
-    _wifiConnected = true;
 }
 
 void EspMQTTClient::onWiFiConnectionLost()
@@ -215,13 +247,10 @@ void EspMQTTClient::onWiFiConnectionLost()
   // If we handle wifi, we force disconnection to clear the last connection
   if (_wifiSsid != NULL)
     WiFi.disconnect();
-
-  _wifiConnected = false;
 }
 
 void EspMQTTClient::onMQTTConnectionEstablished()
 {
-  _mqttConnected = true;
   _connectionEstablishedCount++;
   _connectionEstablishedCallback();
 }
@@ -232,7 +261,6 @@ void EspMQTTClient::onMQTTConnectionLost()
     Serial.println("MQTT! Lost connection.");
 
   _topicSubscriptionListSize = 0;
-  _mqttConnected = false;
 }
 
 
@@ -375,7 +403,7 @@ void EspMQTTClient::connectToWifi()
 }
 
 // Try to connect to the MQTT broker and return True if the connection is successfull (blocking)
-bool EspMQTTClient::connectToMqttBroker()
+void EspMQTTClient::connectToMqttBroker()
 {
   if (_enableSerialLogs)
     Serial.printf("MQTT: Connecting to broker @%s ... ", _mqttServerIp);
@@ -388,7 +416,7 @@ bool EspMQTTClient::connectToMqttBroker()
       Serial.println("ok.");
     else
     {
-      Serial.print("unable to connect, ");
+      Serial.print("unable to connect, reason: ");
 
       switch (_mqttClient.state())
       {
@@ -420,10 +448,10 @@ bool EspMQTTClient::connectToMqttBroker()
           Serial.println("MQTT_CONNECT_UNAUTHORIZED");
           break;
       }
+
+      Serial.printf("MQTT: Retrying to connect in %i seconds.", MQTT_CONNECTION_RETRY_DELAY / 1000);
     }
   }
-
-  return success;
 }
 
 // Delayed execution handling. 

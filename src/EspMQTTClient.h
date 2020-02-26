@@ -27,7 +27,7 @@
 
 #define MAX_TOPIC_SUBSCRIPTION_LIST_SIZE 10
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
-#define CONNECTION_RETRY_DELAY 10 * 1000
+#define MQTT_CONNECTION_RETRY_DELAY 30 * 1000
 
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
@@ -158,7 +158,7 @@ private:
   void onMQTTConnectionLost();
 
   void connectToWifi();
-  bool connectToMqttBroker();
+  void connectToMqttBroker();
   void processDelayedExecutionRequests();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
