@@ -88,7 +88,6 @@ private:
   // General behaviour related
   ConnectionEstablishedCallback mConnectionEstablishedCallback;
   bool mEnableSerialLogs;
-  bool mShowLegacyConstructorWarning;
   unsigned int mConnectionEstablishedCount; // Incremented before each mConnectionEstablishedCallback call
 
 public:
@@ -123,32 +122,6 @@ public:
     const char* mqttServerIp,
     const short mqttServerPort,
     const char* mqttClientName = "ESP8266");
-
-  // Legacy constructor for version 1.3 - WILL BE DELETED SOONER OR LATER
-  EspMQTTClient(
-    const char* wifiSsid, 
-    const char* wifiPassword,
-    ConnectionEstablishedCallback connectionEstablishedCallback,
-    const char* mqttServerIp, 
-    const short mqttServerPort = 1883,
-    const char* mqttUsername = NULL, 
-    const char* mqttPassword = NULL, 
-    const char* mqttClientName = "ESP8266",
-    const bool enableWebUpdater = true, 
-    const bool enableSerialLogs = true);
-
-  // Legacy constructor for version <= 1.2 - WILL BE DELETED SOONER OR LATER
-  EspMQTTClient(
-    const char* wifiSsid,
-    const char* wifiPassword, 
-    const char* mqttServerIp,
-    const short mqttServerPort, 
-    const char* mqttUsername, 
-    const char* mqttPassword,
-    const char* mqttClientName, 
-    ConnectionEstablishedCallback connectionEstablishedCallback,
-    const bool enableWebUpdater = true, 
-    const bool enableSerialLogs = true);
 
   ~EspMQTTClient();
 

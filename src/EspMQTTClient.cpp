@@ -32,56 +32,6 @@ EspMQTTClient::EspMQTTClient(
 {
 }
 
-// Warning : for old constructor support, this will be deleted soon or later
-EspMQTTClient::EspMQTTClient(
-  const char* wifiSsid, 
-  const char* wifiPassword, 
-  const char* mqttServerIp,
-  const short mqttServerPort, 
-  const char* mqttUsername, 
-  const char* mqttPassword,
-  const char* mqttClientName, 
-  ConnectionEstablishedCallback connectionEstablishedCallback,
-  const bool enableWebUpdater, 
-  const bool enableSerialLogs) :
-  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, mqttUsername, mqttPassword, mqttClientName, mqttServerPort)
-{
-  if (enableWebUpdater)
-    enableHTTPWebUpdater();
-
-  if (enableSerialLogs)
-    enableDebuggingMessages();
-
-  setOnConnectionEstablishedCallback(connectionEstablishedCallback);
-
-  mShowLegacyConstructorWarning = true;
-}
-
-// Warning : for old constructor support, this will be deleted soon or later
-EspMQTTClient::EspMQTTClient(
-  const char* wifiSsid, 
-  const char* wifiPassword,
-  ConnectionEstablishedCallback connectionEstablishedCallback, 
-  const char* mqttServerIp, 
-  const short mqttServerPort,
-  const char* mqttUsername,
-  const char* mqttPassword, 
-  const char* mqttClientName,
-  const bool enableWebUpdater,
-  const bool enableSerialLogs) :
-  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, mqttUsername, mqttPassword, mqttClientName, mqttServerPort)
-{
-  if (enableWebUpdater)
-    enableHTTPWebUpdater();
-
-  if (enableSerialLogs)
-    enableDebuggingMessages();
-
-  setOnConnectionEstablishedCallback(connectionEstablishedCallback);
-
-  mShowLegacyConstructorWarning = true;
-}
-
 EspMQTTClient::EspMQTTClient(
   const char* wifiSsid,
   const char* wifiPassword,
@@ -122,7 +72,6 @@ EspMQTTClient::EspMQTTClient(
   // other
   mEnableSerialLogs = false;
   mConnectionEstablishedCallback = onConnectionEstablished;
-  mShowLegacyConstructorWarning = false;
   mDelayedExecutionListSize = 0;
   mConnectionEstablishedCount = 0;
 }
@@ -249,13 +198,6 @@ void EspMQTTClient::loop()
         i--;
       }
     }
-  }
-
-  // Old constructor support warning
-  if (mEnableSerialLogs && mShowLegacyConstructorWarning)
-  {
-    mShowLegacyConstructorWarning = false;
-    Serial.print("SYS! You are using a constructor that will be deleted soon, please update your code with the new construction format.\n");
   }
 }
 
