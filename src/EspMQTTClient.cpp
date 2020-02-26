@@ -40,48 +40,48 @@ EspMQTTClient::EspMQTTClient(
   const char* mqttPassword,
   const char* mqttClientName,
   const short mqttServerPort) :
-  mWifiSsid(wifiSsid),
-  mWifiPassword(wifiPassword),
-  mMqttServerIp(mqttServerIp),
-  mMqttUsername(mqttUsername),
-  mMqttPassword(mqttPassword),
-  mMqttClientName(mqttClientName),
-  mMqttServerPort(mqttServerPort),
-  mMqttClient(mqttServerIp, mqttServerPort, mWifiClient)
+  _wifiSsid(wifiSsid),
+  _wifiPassword(wifiPassword),
+  _mqttServerIp(mqttServerIp),
+  _mqttUsername(mqttUsername),
+  _mqttPassword(mqttPassword),
+  _mqttClientName(mqttClientName),
+  _mqttServerPort(mqttServerPort),
+  _mqttClient(mqttServerIp, mqttServerPort, _wifiClient)
 {
   // WiFi connection
-  mWifiConnected = false;
-  mLastWifiConnectionAttemptMillis = 0;
-  mLastWifiConnectionSuccessMillis = 0;
+  _wifiConnected = false;
+  _lastWifiConnectionAttemptMillis = 0;
+  _lastWifiConnectionSuccessMillis = 0;
 
   // MQTT client
-  mTopicSubscriptionListSize = 0;
-  mMqttConnected = false;
-  mLastMqttConnectionAttemptMillis = 0;
-  mMqttLastWillTopic = 0;
-  mMqttLastWillMessage = 0;
-  mMqttLastWillRetain = false;
-  mMqttCleanSession = true;
-  mMqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
+  _topicSubscriptionListSize = 0;
+  _mqttConnected = false;
+  _lastMqttConnectionAttemptMillis = 0;
+  _mqttLastWillTopic = 0;
+  _mqttLastWillMessage = 0;
+  _mqttLastWillRetain = false;
+  _mqttCleanSession = true;
+  _mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
 
   // Web updater
-  mUpdateServerAddress = NULL;
-  mHttpServer = NULL;
-  mHttpUpdater = NULL;
+  _updateServerAddress = NULL;
+  _httpServer = NULL;
+  _httpUpdater = NULL;
 
   // other
-  mEnableSerialLogs = false;
-  mConnectionEstablishedCallback = onConnectionEstablished;
-  mDelayedExecutionListSize = 0;
-  mConnectionEstablishedCount = 0;
+  _enableSerialLogs = false;
+  _connectionEstablishedCallback = onConnectionEstablished;
+  _delayedExecutionListSize = 0;
+  _connectionEstablishedCount = 0;
 }
 
 EspMQTTClient::~EspMQTTClient()
 {
-  if (mHttpServer != NULL)
-    delete mHttpServer;
-  if (mHttpUpdater != NULL)
-    delete mHttpUpdater;
+  if (_httpServer != NULL)
+    delete _httpServer;
+  if (_httpUpdater != NULL)
+    delete _httpUpdater;
 }
 
 
@@ -89,41 +89,41 @@ EspMQTTClient::~EspMQTTClient()
 
 void EspMQTTClient::enableDebuggingMessages(const bool enabled)
 {
-  mEnableSerialLogs = enabled;
+  _enableSerialLogs = enabled;
 }
 
 void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* password, const char* address)
 {
-  if (mHttpServer == NULL)
+  if (_httpServer == NULL)
   {
-    mHttpServer = new WebServer(80);
-    mHttpUpdater = new ESPHTTPUpdateServer(mEnableSerialLogs);
-    mUpdateServerUsername = (char*)username;
-    mUpdateServerPassword = (char*)password;
-    mUpdateServerAddress = (char*)address;
+    _httpServer = new WebServer(80);
+    _httpUpdater = new ESPHTTPUpdateServer(_enableSerialLogs);
+    _updateServerUsername = (char*)username;
+    _updateServerPassword = (char*)password;
+    _updateServerAddress = (char*)address;
   }
-  else if (mEnableSerialLogs)
+  else if (_enableSerialLogs)
     Serial.print("SYS! You can't call enableHTTPWebUpdater() more than once !\n");
 }
 
 void EspMQTTClient::enableHTTPWebUpdater(const char* address)
 {
-  if(mMqttUsername == NULL || mMqttPassword == NULL)
+  if(_mqttUsername == NULL || _mqttPassword == NULL)
     enableHTTPWebUpdater("", "", address);
   else
-    enableHTTPWebUpdater(mMqttUsername, mMqttPassword, address);
+    enableHTTPWebUpdater(_mqttUsername, _mqttPassword, address);
 }
 
 void EspMQTTClient::enableMQTTPersistence()
 {
-  mMqttCleanSession = false;
+  _mqttCleanSession = false;
 }
 
 void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message, const bool retain)
 {
-  mMqttLastWillTopic = (char*)topic;
-  mMqttLastWillMessage = (char*)message;
-  mMqttLastWillRetain = retain;
+  _mqttLastWillTopic = (char*)topic;
+  _mqttLastWillMessage = (char*)message;
+  _mqttLastWillRetain = retain;
 }
 
 
@@ -135,34 +135,34 @@ void EspMQTTClient::loop()
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    if (!mWifiConnected)
+    if (!_wifiConnected)
       onWiFiConnectionEstablished();
 
     // MQTT handling
-    if (mMqttClient.connected())
+    if (_mqttClient.connected())
     {
-      mMqttClient.loop();
+      _mqttClient.loop();
     }
     else
     {
-      if (mMqttConnected)
+      if (_mqttConnected)
         onMQTTConnectionLost();
 
-      if (currentMillis - mLastMqttConnectionAttemptMillis > CONNECTION_RETRY_DELAY || mLastMqttConnectionAttemptMillis == 0)
+      if (currentMillis - _lastMqttConnectionAttemptMillis > CONNECTION_RETRY_DELAY || _lastMqttConnectionAttemptMillis == 0)
       {
         bool success = connectToMqttBroker();
 
         if(success)
           onMQTTConnectionEstablished();
 
-        mLastMqttConnectionAttemptMillis = millis();
+        _lastMqttConnectionAttemptMillis = millis();
       }
     }
       
     // Web updater handling
-    if (mHttpServer != NULL)
+    if (_httpServer != NULL)
     {
-      mHttpServer->handleClient();
+      _httpServer->handleClient();
       #ifdef ESP8266
         MDNS.update(); // We need to do this only for ESP8266
       #endif
@@ -171,30 +171,30 @@ void EspMQTTClient::loop()
   }
   else // If we are not connected to wifi
   {
-    if (mWifiConnected)
+    if (_wifiConnected)
       onWiFiConnectionLost();
 
     // We retry to connect to the wifi if we handle it and there was no attempt since the last connection lost
-    if (mWifiSsid != NULL && (mLastWifiConnectionAttemptMillis == 0 || mLastWifiConnectionSuccessMillis > mLastWifiConnectionAttemptMillis))
+    if (_wifiSsid != NULL && (_lastWifiConnectionAttemptMillis == 0 || _lastWifiConnectionSuccessMillis > _lastWifiConnectionAttemptMillis))
     {
       connectToWifi();
-      mLastWifiConnectionAttemptMillis = millis();
+      _lastWifiConnectionAttemptMillis = millis();
     }
   }
   
   // Delayed execution handling
-  if (mDelayedExecutionListSize > 0)
+  if (_delayedExecutionListSize > 0)
   {
     unsigned long currentMillis = millis();
 
-    for(byte i = 0 ; i < mDelayedExecutionListSize ; i++)
+    for(byte i = 0 ; i < _delayedExecutionListSize ; i++)
     {
-      if (mDelayedExecutionList[i].targetMillis <= currentMillis)
+      if (_delayedExecutionList[i].targetMillis <= currentMillis)
       {
-        mDelayedExecutionList[i].callback();
-        for(byte j = i ; j < mDelayedExecutionListSize-1 ; j++)
-          mDelayedExecutionList[j] = mDelayedExecutionList[j + 1];
-        mDelayedExecutionListSize--;
+        _delayedExecutionList[i].callback();
+        for(byte j = i ; j < _delayedExecutionListSize-1 ; j++)
+          _delayedExecutionList[j] = _delayedExecutionList[j + 1];
+        _delayedExecutionListSize--;
         i--;
       }
     }
@@ -203,9 +203,9 @@ void EspMQTTClient::loop()
 
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
-  bool success = mMqttClient.publish(topic.c_str(), payload.c_str(), retain);
+  bool success = _mqttClient.publish(topic.c_str(), payload.c_str(), retain);
 
-  if (mEnableSerialLogs) 
+  if (_enableSerialLogs) 
   {
     if(success)
       Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
@@ -219,32 +219,32 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
   // Check the possibility to add a new topic
-  if (mTopicSubscriptionListSize >= MAX_TOPIC_SUBSCRIPTION_LIST_SIZE) 
+  if (_topicSubscriptionListSize >= MAX_TOPIC_SUBSCRIPTION_LIST_SIZE) 
   {
-    if (mEnableSerialLogs)
+    if (_enableSerialLogs)
       Serial.println("MQTT! Subscription list is full, ignored.");
     return false;
   }
 
   // Check the duplicate of the subscription to the topic
   bool found = false;
-  for (byte i = 0; i < mTopicSubscriptionListSize && !found; i++)
-    found = mTopicSubscriptionList[i].topic.equals(topic);
+  for (byte i = 0; i < _topicSubscriptionListSize && !found; i++)
+    found = _topicSubscriptionList[i].topic.equals(topic);
 
   if (found) 
   {
-    if (mEnableSerialLogs)
+    if (_enableSerialLogs)
       Serial.printf("MQTT! Subscribed to [%s] already, ignored.\n", topic.c_str());
     return false;
   }
 
   // All checks are passed - do the job
-  bool success = mMqttClient.subscribe(topic.c_str());
+  bool success = _mqttClient.subscribe(topic.c_str());
 
   if(success)
-    mTopicSubscriptionList[mTopicSubscriptionListSize++] = { topic, messageReceivedCallback, NULL };
+    _topicSubscriptionList[_topicSubscriptionListSize++] = { topic, messageReceivedCallback, NULL };
   
-  if (mEnableSerialLogs)
+  if (_enableSerialLogs)
   {
     if(success)
       Serial.printf("MQTT: Subscribed to [%s]\n", topic.c_str());
@@ -259,7 +259,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTo
 {
   if(subscribe(topic, (MessageReceivedCallback)NULL))
   {
-    mTopicSubscriptionList[mTopicSubscriptionListSize-1].callbackWithTopic = messageReceivedCallback;
+    _topicSubscriptionList[_topicSubscriptionListSize-1].callbackWithTopic = messageReceivedCallback;
     return true;
   }
   return false;
@@ -270,16 +270,16 @@ bool EspMQTTClient::unsubscribe(const String &topic)
   bool found = false;
   bool success = false;
 
-  for (byte i = 0; i < mTopicSubscriptionListSize; i++)
+  for (byte i = 0; i < _topicSubscriptionListSize; i++)
   {
     if (!found)
     {
-      if (mTopicSubscriptionList[i].topic.equals(topic))
+      if (_topicSubscriptionList[i].topic.equals(topic))
       {
         found = true;
-        success = mMqttClient.unsubscribe(topic.c_str());
+        success = _mqttClient.unsubscribe(topic.c_str());
 
-        if (mEnableSerialLogs)
+        if (_enableSerialLogs)
         {
           if(success)
             Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
@@ -292,13 +292,13 @@ bool EspMQTTClient::unsubscribe(const String &topic)
     if (found)
     {
       if ((i + 1) < MAX_TOPIC_SUBSCRIPTION_LIST_SIZE)
-        mTopicSubscriptionList[i] = mTopicSubscriptionList[i + 1];
+        _topicSubscriptionList[i] = _topicSubscriptionList[i + 1];
     }
   }
 
   if (found)
-    mTopicSubscriptionListSize--;
-  else if (mEnableSerialLogs)
+    _topicSubscriptionListSize--;
+  else if (_enableSerialLogs)
     Serial.println("MQTT! Topic cannot be found to unsubscribe, ignored.");
 
   return success;
@@ -306,16 +306,16 @@ bool EspMQTTClient::unsubscribe(const String &topic)
 
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
 {
-  if (mDelayedExecutionListSize < MAX_DELAYED_EXECUTION_LIST_SIZE)
+  if (_delayedExecutionListSize < MAX_DELAYED_EXECUTION_LIST_SIZE)
   {
     DelayedExecutionRecord delayedExecutionRecord;
     delayedExecutionRecord.targetMillis = millis() + delay;
     delayedExecutionRecord.callback = callback;
     
-    mDelayedExecutionList[mDelayedExecutionListSize] = delayedExecutionRecord;
-    mDelayedExecutionListSize++;
+    _delayedExecutionList[_delayedExecutionListSize] = delayedExecutionRecord;
+    _delayedExecutionListSize++;
   }
-  else if (mEnableSerialLogs)
+  else if (_enableSerialLogs)
     Serial.printf("SYS! The list of delayed functions is full.\n");
 }
 
@@ -324,52 +324,52 @@ void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCa
 
 void EspMQTTClient::onWiFiConnectionEstablished()
 {
-    if (mEnableSerialLogs)
+    if (_enableSerialLogs)
       Serial.printf("WiFi: Connected, ip : %s\n", WiFi.localIP().toString().c_str());
 
-    mLastWifiConnectionSuccessMillis = millis();
+    _lastWifiConnectionSuccessMillis = millis();
     
     // Config of web updater
-    if (mHttpServer != NULL)
+    if (_httpServer != NULL)
     {
-      MDNS.begin(mMqttClientName);
-      mHttpUpdater->setup(mHttpServer, mUpdateServerAddress, mUpdateServerUsername, mUpdateServerPassword);
-      mHttpServer->begin();
+      MDNS.begin(_mqttClientName);
+      _httpUpdater->setup(_httpServer, _updateServerAddress, _updateServerUsername, _updateServerPassword);
+      _httpServer->begin();
       MDNS.addService("http", "tcp", 80);
     
-      if (mEnableSerialLogs)
-        Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", mMqttClientName, mUpdateServerUsername, mUpdateServerPassword);
+      if (_enableSerialLogs)
+        Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
     }
 
-    mWifiConnected = true;
+    _wifiConnected = true;
 }
 
 void EspMQTTClient::onWiFiConnectionLost()
 {
-  if (mEnableSerialLogs)
+  if (_enableSerialLogs)
     Serial.println("WiFi! Lost connection.");
 
   // If we handle wifi, we force disconnection to clear the last connection
-  if (mWifiSsid != NULL)
+  if (_wifiSsid != NULL)
     WiFi.disconnect();
 
-  mWifiConnected = false;
+  _wifiConnected = false;
 }
 
 void EspMQTTClient::onMQTTConnectionEstablished()
 {
-  mMqttConnected = true;
-  mConnectionEstablishedCount++;
-  mConnectionEstablishedCallback();
+  _mqttConnected = true;
+  _connectionEstablishedCount++;
+  _connectionEstablishedCallback();
 }
 
 void EspMQTTClient::onMQTTConnectionLost()
 {
-  if (mEnableSerialLogs)
+  if (_enableSerialLogs)
     Serial.println("MQTT! Lost connection.");
 
-  mTopicSubscriptionListSize = 0;
-  mMqttConnected = false;
+  _topicSubscriptionListSize = 0;
+  _mqttConnected = false;
 }
 
 // Initiate a Wifi connection (non-blocking)
@@ -377,25 +377,25 @@ void EspMQTTClient::connectToWifi()
 {
   WiFi.mode(WIFI_STA);
   #ifdef ESP32
-    WiFi.setHostname(mMqttClientName);
+    WiFi.setHostname(_mqttClientName);
   #else
-    WiFi.hostname(mMqttClientName);
+    WiFi.hostname(_mqttClientName);
   #endif
-  WiFi.begin(mWifiSsid, mWifiPassword);
+  WiFi.begin(_wifiSsid, _wifiPassword);
 
-  if (mEnableSerialLogs)
-    Serial.printf("\nWiFi: Connecting to %s ... \n", mWifiSsid);
+  if (_enableSerialLogs)
+    Serial.printf("\nWiFi: Connecting to %s ... \n", _wifiSsid);
 }
 
 // Try to connect to the MQTT broker and return True if the connection is successfull (blocking)
 bool EspMQTTClient::connectToMqttBroker()
 {
-  if (mEnableSerialLogs)
-    Serial.printf("MQTT: Connecting to broker @%s ... ", mMqttServerIp);
+  if (_enableSerialLogs)
+    Serial.printf("MQTT: Connecting to broker @%s ... ", _mqttServerIp);
 
-  bool success = mMqttClient.connect(mMqttClientName, mMqttUsername, mMqttPassword, mMqttLastWillTopic, 0, mMqttLastWillRetain, mMqttLastWillMessage, mMqttCleanSession);
+  bool success = _mqttClient.connect(_mqttClientName, _mqttUsername, _mqttPassword, _mqttLastWillTopic, 0, _mqttLastWillRetain, _mqttLastWillMessage, _mqttCleanSession);
 
-  if (mEnableSerialLogs)
+  if (_enableSerialLogs)
   {
     if (success) 
       Serial.println("ok.");
@@ -403,7 +403,7 @@ bool EspMQTTClient::connectToMqttBroker()
     {
       Serial.print("unable to connect, ");
 
-      switch (mMqttClient.state())
+      switch (_mqttClient.state())
       {
         case -4:
           Serial.println("MQTT_CONNECTION_TIMEOUT");
@@ -488,7 +488,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   {
     strTerminationPos = length - 1;
 
-    if (mEnableSerialLogs)
+    if (_enableSerialLogs)
       Serial.print("MQTT! Your message may be truncated, please change MQTT_MAX_PACKET_SIZE of PubSubClient.h to a higher value.\n");
   }
   else
@@ -500,18 +500,18 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
   String topicStr(topic);
 
   // Logging
-  if (mEnableSerialLogs)
+  if (_enableSerialLogs)
     Serial.printf("MQTT >> [%s] %s\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
-  for (byte i = 0 ; i < mTopicSubscriptionListSize ; i++)
+  for (byte i = 0 ; i < _topicSubscriptionListSize ; i++)
   {
-    if (mqttTopicMatch(mTopicSubscriptionList[i].topic, String(topic)))
+    if (mqttTopicMatch(_topicSubscriptionList[i].topic, String(topic)))
     {
-      if(mTopicSubscriptionList[i].callback != NULL)
-        mTopicSubscriptionList[i].callback(payloadStr); // Call the callback
-      if(mTopicSubscriptionList[i].callbackWithTopic != NULL)
-        mTopicSubscriptionList[i].callbackWithTopic(topicStr, payloadStr); // Call the callback
+      if(_topicSubscriptionList[i].callback != NULL)
+        _topicSubscriptionList[i].callback(payloadStr); // Call the callback
+      if(_topicSubscriptionList[i].callbackWithTopic != NULL)
+        _topicSubscriptionList[i].callbackWithTopic(topicStr, payloadStr); // Call the callback
     }
   }
 }

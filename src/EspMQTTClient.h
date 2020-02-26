@@ -40,55 +40,55 @@ class EspMQTTClient
 {
 private:
   // Wifi related
-  bool mWifiConnected;
-  unsigned long mLastWifiConnectionAttemptMillis;
-  unsigned long mLastWifiConnectionSuccessMillis;
-  const char* mWifiSsid;
-  const char* mWifiPassword;
-  WiFiClient mWifiClient;
+  bool _wifiConnected;
+  unsigned long _lastWifiConnectionAttemptMillis;
+  unsigned long _lastWifiConnectionSuccessMillis;
+  const char* _wifiSsid;
+  const char* _wifiPassword;
+  WiFiClient _wifiClient;
 
   // MQTT related
-  bool mMqttConnected;
-  unsigned long mLastMqttConnectionAttemptMillis;
-  const char* mMqttServerIp;
-  const char* mMqttUsername;
-  const char* mMqttPassword;
-  const char* mMqttClientName;
-  const short mMqttServerPort;
-  bool mMqttCleanSession;
-  char* mMqttLastWillTopic;
-  char* mMqttLastWillMessage;
-  bool mMqttLastWillRetain;
+  bool _mqttConnected;
+  unsigned long _lastMqttConnectionAttemptMillis;
+  const char* _mqttServerIp;
+  const char* _mqttUsername;
+  const char* _mqttPassword;
+  const char* _mqttClientName;
+  const short _mqttServerPort;
+  bool _mqttCleanSession;
+  char* _mqttLastWillTopic;
+  char* _mqttLastWillMessage;
+  bool _mqttLastWillRetain;
 
-  PubSubClient mMqttClient;
+  PubSubClient _mqttClient;
 
   struct TopicSubscriptionRecord {
     String topic;
     MessageReceivedCallback callback;
     MessageReceivedCallbackWithTopic callbackWithTopic;
   };
-  TopicSubscriptionRecord mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
-  byte mTopicSubscriptionListSize;
+  TopicSubscriptionRecord _topicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
+  byte _topicSubscriptionListSize;
 
   // HTTP update server related
-  char* mUpdateServerAddress;
-  char* mUpdateServerUsername;
-  char* mUpdateServerPassword;
-  WebServer* mHttpServer;
-  ESPHTTPUpdateServer* mHttpUpdater;
+  char* _updateServerAddress;
+  char* _updateServerUsername;
+  char* _updateServerPassword;
+  WebServer* _httpServer;
+  ESPHTTPUpdateServer* _httpUpdater;
 
   // Delayed execution related
   struct DelayedExecutionRecord {
     unsigned long targetMillis;
     DelayedExecutionCallback callback;
   };
-  DelayedExecutionRecord mDelayedExecutionList[MAX_DELAYED_EXECUTION_LIST_SIZE];
-  byte mDelayedExecutionListSize;
+  DelayedExecutionRecord _delayedExecutionList[MAX_DELAYED_EXECUTION_LIST_SIZE];
+  byte _delayedExecutionListSize;
 
   // General behaviour related
-  ConnectionEstablishedCallback mConnectionEstablishedCallback;
-  bool mEnableSerialLogs;
-  unsigned int mConnectionEstablishedCount; // Incremented before each mConnectionEstablishedCallback call
+  ConnectionEstablishedCallback _connectionEstablishedCallback;
+  bool _enableSerialLogs;
+  unsigned int _connectionEstablishedCount; // Incremented before each _connectionEstablishedCallback call
 
 public:
   // Wifi + MQTT with no MQTT authentification
@@ -128,7 +128,7 @@ public:
   // Optional functionality
   void enableDebuggingMessages(const bool enabled = true); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
   void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
-  void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to mMqttUsername and mMqttPassword
+  void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to _mqttUsername and _mqttPassword
   void enableMQTTPersistence(); // Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
   void enableLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
 
@@ -145,11 +145,11 @@ public:
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
 
   inline bool isConnected() const { return isWifiConnected() && isMqttConnected(); }; // Return true if everything is connected
-  inline bool isWifiConnected() const { return mWifiConnected; }; // Return true if wifi is connected
-  inline bool isMqttConnected() const { return mMqttConnected; }; // Return true if mqtt is connected
-  inline bool getConnectionEstablishedCount() const { return mConnectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
+  inline bool isWifiConnected() const { return _wifiConnected; }; // Return true if wifi is connected
+  inline bool isMqttConnected() const { return _mqttConnected; }; // Return true if mqtt is connected
+  inline bool getConnectionEstablishedCount() const { return _connectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
 
-  inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { mConnectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
+  inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
 
 private:
   void onWiFiConnectionEstablished();
