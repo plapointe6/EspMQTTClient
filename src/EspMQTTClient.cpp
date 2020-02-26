@@ -185,7 +185,6 @@ void EspMQTTClient::loop()
     return;
   }
 
-
   // MQTT Connection state handling
 
   bool isMqttConnected = isWifiConnected && _mqttClient.connected();
@@ -406,7 +405,7 @@ void EspMQTTClient::connectToWifi()
 void EspMQTTClient::connectToMqttBroker()
 {
   if (_enableSerialLogs)
-    Serial.printf("MQTT: Connecting to broker @%s ... ", _mqttServerIp);
+    Serial.printf("MQTT: Connecting to broker @%s with client name \"@%s\" ... ", _mqttServerIp, _mqttClientName);
 
   bool success = _mqttClient.connect(_mqttClientName, _mqttUsername, _mqttPassword, _mqttLastWillTopic, 0, _mqttLastWillRetain, _mqttLastWillMessage, _mqttCleanSession);
 
