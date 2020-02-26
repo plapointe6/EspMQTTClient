@@ -148,6 +148,10 @@ public:
   inline bool isWifiConnected() const { return _wifiConnected; }; // Return true if wifi is connected
   inline bool isMqttConnected() const { return _mqttConnected; }; // Return true if mqtt is connected
   inline bool getConnectionEstablishedCount() const { return _connectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
+  
+  inline const char* getMqttClientName() { return _mqttClientName; };
+  inline const char* getMqttServerIp() { return _mqttServerIp; };
+  inline const short getMqttServerPort() { return _mqttServerPort; };
 
   inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
 
