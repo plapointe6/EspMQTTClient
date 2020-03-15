@@ -2,6 +2,7 @@
 #define ESP_MQTT_CLIENT_H
 
 #include <PubSubClient.h>
+#include <vector>
 
 #ifdef ESP8266
 
@@ -25,7 +26,6 @@
 
 #endif
 
-#define MAX_TOPIC_SUBSCRIPTION_LIST_SIZE 10
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
 #define CONNECTION_RETRY_DELAY 10 * 1000
 
@@ -67,8 +67,7 @@ private:
     MessageReceivedCallback callback;
     MessageReceivedCallbackWithTopic callbackWithTopic;
   };
-  TopicSubscriptionRecord mTopicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
-  byte mTopicSubscriptionListSize;
+  std::vector<TopicSubscriptionRecord> mTopicSubscriptionList;
 
   // HTTP update server related
   char* mUpdateServerAddress;
