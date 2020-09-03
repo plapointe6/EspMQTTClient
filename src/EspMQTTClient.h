@@ -27,7 +27,6 @@
 
 #define MAX_TOPIC_SUBSCRIPTION_LIST_SIZE 10
 #define MAX_DELAYED_EXECUTION_LIST_SIZE 10
-#define MQTT_CONNECTION_RETRY_DELAY 30 * 1000
 
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
@@ -41,15 +40,15 @@ class EspMQTTClient
 private:
   // Wifi related
   bool _wifiConnected;
-  unsigned long _lastWifiConnectionAttemptMillis;
-  unsigned long _lastWifiConnectionSuccessMillis;
+  unsigned long _nextWifiConnectionAttemptMillis;
   const char* _wifiSsid;
   const char* _wifiPassword;
   WiFiClient _wifiClient;
 
   // MQTT related
   bool _mqttConnected;
-  unsigned long _lastMqttConnectionAttemptMillis;
+  unsigned long _nextMqttConnectionAttemptMillis;
+  unsigned int _mqttReconnectionAttemptDelay;
   const char* _mqttServerIp;
   const char* _mqttUsername;
   const char* _mqttPassword;
@@ -153,7 +152,11 @@ public:
   inline const char* getMqttServerIp() { return _mqttServerIp; };
   inline const short getMqttServerPort() { return _mqttServerPort; };
 
-  inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; }; // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
+  // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
+  inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; }; 
+
+  // Allow to set the minimum delay between each MQTT reconnection attempt. 15 seconds by default. 
+  inline void setMqttReconnectionAttemptDelay(const unsigned int milliseconds) { _mqttReconnectionAttemptDelay = milliseconds; };
 
 private:
   void onWiFiConnectionEstablished();
@@ -162,7 +165,7 @@ private:
   void onMQTTConnectionLost();
 
   void connectToWifi();
-  void connectToMqttBroker();
+  bool connectToMqttBroker();
   void processDelayedExecutionRequests();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
   void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
