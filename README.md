@@ -91,12 +91,17 @@ bool unsubscribe(const String &topic);
 
 Change the maximum packet size that can be sent over MQTT. The default is 128 bytes.
 ```c++
-bool setMaxPacketSize(const uint16_t size)
+bool setMaxPacketSize(const uint16_t size);
+```
+
+Change the keepalive interval (15 seconds by default)
+```c++
+void setKeepAlive(uint16_t keepAliveSeconds);
 ```
 
 Enable the display of usefull debugging messages that will output to serial.
 ```c++
-void enableDebuggingMessages(const bool enabled = true)
+void enableDebuggingMessages(const bool enabled = true);
 ```
 
 Enable the web updater. This will host a simple form that will allow firmware upgrade (using, e.g., the `.bin` file produced by "Export Compiled Binary" in the Arduino IDE's "Sketch" menu). Must be set before the first loop() call.
@@ -120,6 +125,11 @@ void enableMQTTPersistence();
 Change the delay between each MQTT reconnection attempt. Default is 15 seconds.
 ```c++
 void setMqttReconnectionAttemptDelay(const unsigned int milliseconds);
+```
+
+Change the delay between each Wifi reconnection attempt. Default is 60 seconds.
+```c++
+void setWifiReconnectionAttemptDelay(const unsigned int milliseconds);
 ```
 
 Connection status

@@ -25,6 +25,7 @@ publish                 KEYWORD2
 subscribe               KEYWORD2
 subscribe               KEYWORD2
 unsubscribe             KEYWORD2
+setKeepAlive            KEYWORD2
 
 executeDelayed          KEYWORD2
 
@@ -40,3 +41,5 @@ getMqttServerPort       KEYWORD2
 setOnConnectionEstablishedCallback  KEYWORD2
 
 setMqttReconnectionAttemptDelay     KEYWORD2
+
+setWifiReconnectionAttemptDelay     KEYWORD2

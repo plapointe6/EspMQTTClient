@@ -377,6 +377,11 @@ bool EspMQTTClient::unsubscribe(const String &topic)
   return true;
 }
 
+void EspMQTTClient::setKeepAlive(uint16_t keepAliveSeconds)
+{
+  _mqttClient.setKeepAlive(keepAliveSeconds);
+}
+
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
 {
   DelayedExecutionRecord delayedExecutionRecord;

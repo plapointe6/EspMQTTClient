@@ -139,6 +139,7 @@ public:
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
   bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+  void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
 
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
