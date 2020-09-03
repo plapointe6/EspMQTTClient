@@ -38,7 +38,10 @@ class EspMQTTClient
 private:
   // Wifi related
   bool _wifiConnected;
+  bool _connectingToWifi;
+  unsigned long _lastWifiConnectiomAttemptMillis;
   unsigned long _nextWifiConnectionAttemptMillis;
+  unsigned int _wifiReconnectionAttemptDelay;
   const char* _wifiSsid;
   const char* _wifiPassword;
   WiFiClient _wifiClient;
@@ -154,6 +157,9 @@ public:
 
   // Allow to set the minimum delay between each MQTT reconnection attempt. 15 seconds by default. 
   inline void setMqttReconnectionAttemptDelay(const unsigned int milliseconds) { _mqttReconnectionAttemptDelay = milliseconds; };
+
+  // Allow to set the minimum delay between each WiFi reconnection attempt. 60 seconds by default. 
+  inline void setWifiReconnectionAttemptDelay(const unsigned int milliseconds) { _wifiReconnectionAttemptDelay = milliseconds; };
 
 private:
   void onWiFiConnectionEstablished();

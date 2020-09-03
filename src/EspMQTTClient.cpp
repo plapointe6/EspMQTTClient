@@ -52,7 +52,10 @@ EspMQTTClient::EspMQTTClient(
 {
   // WiFi connection
   _wifiConnected = false;
+  _connectingToWifi = false;
   _nextWifiConnectionAttemptMillis = 500;
+  _lastWifiConnectiomAttemptMillis = 0;
+  _wifiReconnectionAttemptDelay = 60 * 1000;
 
   // MQTT client
   _mqttConnected = false;
@@ -139,15 +142,31 @@ void EspMQTTClient::loop()
   bool isWifiConnected = (WiFi.status() == WL_CONNECTED);
 
   // A connection to wifi has just been established
-  if (isWifiConnected && !_wifiConnected)
+  if (isWifiConnected && _connectingToWifi)
   {
     onWiFiConnectionEstablished();
+    _connectingToWifi = false;
 
     // At least 500 miliseconds of waiting before an mqtt connection attempt.
     // Some people have reported instabilities when trying to connect to 
     // the mqtt broker right after being connected to wifi.
     // This delay prevent these instabilities.
     _nextMqttConnectionAttemptMillis = millis() + 500;
+  }
+
+  // We are trying to connect to Wifi
+  else if(_connectingToWifi)
+  {
+      if(WiFi.status() == WL_CONNECT_FAILED || millis() - _lastWifiConnectiomAttemptMillis >= _wifiReconnectionAttemptDelay) {
+        if(_enableSerialLogs)
+          Serial.printf("WiFi! Connection attempt failed, delay expired. (%fs). \n", millis()/1000.0);
+        
+        WiFi.disconnect(true);
+        MDNS.end();
+
+        _nextWifiConnectionAttemptMillis = millis() + 500;
+        _connectingToWifi = false;
+      }
   }
 
   // The connection to wifi has just been lost
@@ -176,6 +195,8 @@ void EspMQTTClient::loop()
   {
     connectToWifi();
     _nextWifiConnectionAttemptMillis = 0;
+    _connectingToWifi = true;
+    _lastWifiConnectiomAttemptMillis = millis();
   }
 
   // If there is a change in the wifi connection state, don't handle the mqtt connection state right away.
@@ -229,7 +250,7 @@ void EspMQTTClient::onWiFiConnectionEstablished()
       _httpUpdater->setup(_httpServer, _updateServerAddress, _updateServerUsername, _updateServerPassword);
       _httpServer->begin();
       MDNS.addService("http", "tcp", 80);
-    
+
       if (_enableSerialLogs)
         Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
     }
@@ -242,7 +263,10 @@ void EspMQTTClient::onWiFiConnectionLost()
 
   // If we handle wifi, we force disconnection to clear the last connection
   if (_wifiSsid != NULL)
-    WiFi.disconnect();
+  {
+    WiFi.disconnect(true);
+    MDNS.end();
+  }
 }
 
 void EspMQTTClient::onMQTTConnectionEstablished()
