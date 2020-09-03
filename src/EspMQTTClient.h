@@ -135,6 +135,7 @@ public:
   void loop();
 
   // MQTT related
+  bool setMaxPacketSize(const uint16_t size); // Pubsubclient >= 2.8; override the default value of MQTT_MAX_PACKET_SIZE
   bool publish(const String &topic, const String &payload, bool retain = false);
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
   bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback);

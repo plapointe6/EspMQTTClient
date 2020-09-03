@@ -267,6 +267,13 @@ void EspMQTTClient::onMQTTConnectionLost()
 
 // =============== Public functions for interaction with thus lib =================
 
+
+bool EspMQTTClient::setMaxPacketSize(const uint16_t size)
+{
+  if(!_mqttClient.setBufferSize(size) && _enableSerialLogs)
+    Serial.println("MQTT! failed to set the max packet size.");
+}
+
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
   bool success = _mqttClient.publish(topic.c_str(), payload.c_str(), retain);
@@ -276,7 +283,7 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
     if(success)
       Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
     else
-      Serial.println("MQTT! publish failed, is the message too long ?"); // This can occurs if the message is too long according to the maximum defined in PubsubClient.h
+      Serial.println("MQTT! publish failed, is the message too long ? (see setMaxPacketSize())"); // This can occurs if the message is too long according to the maximum defined in PubsubClient.h
   }
 
   return success;
