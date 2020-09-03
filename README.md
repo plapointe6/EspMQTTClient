@@ -127,7 +127,7 @@ Connection status
 bool isConnected(); // Return true if everything is connected.
 bool isWifiConnected(); // Return true if WiFi is connected.
 bool isMqttConnected(); // Return true if MQTT is connected.
-bool getConnectionEstablishedCount() const { return _connectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
+bool getConnectionEstablishedCount() // Return the number of time onConnectionEstablished has been called since the beginning.
 ```
 
 As ESP8366 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
@@ -167,16 +167,16 @@ The function `subscribe` allow to subscribe to a specific topic.
 For exemple, if you want to subscribe to topic `test/mytopic`, you can do this : 
 ```c++
 void onTestMessageReceived(const String& message) {
-  Serial.print("message received from mytopic/test: " + message);
+  Serial.print("message received from test/mytopic: " + message);
 }
 
-client.subscribe("mytopic/test", onTestMessageReceived);
+client.subscribe("test/mytopic", onTestMessageReceived);
 ```
 
 You can also use lambdas to shorten the code like this : 
 ```c++
-client.subscribe("mytopic/test", [](const String& message) {
-  Serial.print("message received from mytopic/test: " + message;
+client.subscribe("test/mytopic", [](const String& message) {
+  Serial.print("message received from test/mytopic: " + message;
 });
 ```
 
@@ -184,18 +184,18 @@ client.subscribe("mytopic/test", [](const String& message) {
 
 This library also handle MQTT topic wilcards. Most of the time, you will want to see what was the original topic when the callback is called. Here is how to do that.
 
-Exemple : Subscribe to "mytopic/wildcardtest/#" and display received topic and message to Serial 
+Exemple : Subscribe to "wildcardtest/#" and display received topic and message to Serial 
 ```c++
 void onMessageReceived(const String& topic, const String& message) {
   Serial.println(topic + ": " + message);
 }
 
-client.subscribe("mytopic/wildcardtest/#", onMessageReceived);
+client.subscribe("wildcardtest/#", onMessageReceived);
 ```
 
 The same thing with lambdas : 
 ```c++
-  client.subscribe("mytopic/wildcardtest/#", [](const String& topic, const String& message) {
+  client.subscribe("wildcardtest/#", [](const String& topic, const String& message) {
     Serial.println(topic + ": " + message);
   });
 ```
