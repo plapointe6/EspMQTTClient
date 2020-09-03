@@ -16,9 +16,6 @@ You just need to provide your credentials and it will manage the following thing
 
 The MQTT communication depends on the PubSubClient Library (https://github.com/knolleary/pubsubclient).
 
-From PubSubClient:
-"The maximum message size, including header, is 128 bytes by default. This is configurable via `MQTT_MAX_PACKET_SIZE` in `PubSubClient.h`"
-
 ## Example
 
 ```c++
@@ -92,6 +89,11 @@ bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallb
 bool unsubscribe(const String &topic);
 ```
 
+Change the maximum packet size that can be sent over MQTT. The default is 128 bytes.
+```c++
+bool setMaxPacketSize(const uint16_t size)
+```
+
 Enable the display of usefull debugging messages that will output to serial.
 ```c++
 void enableDebuggingMessages(const bool enabled = true)
@@ -110,21 +112,34 @@ Enable last will message. Must be set before the first loop() call.
 void enableLastWillMessage(const char* topic, const char* message, const bool retain = false);
 ```
 
+Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
+```c++
+void enableMQTTPersistence();
+```
+
+Change the delay between each MQTT reconnection attempt. Default is 15 seconds.
+```c++
+void setMqttReconnectionAttemptDelay(const unsigned int milliseconds);
+```
+
 Connection status
 ```c++
 bool isConnected(); // Return true if everything is connected.
 bool isWifiConnected(); // Return true if WiFi is connected.
 bool isMqttConnected(); // Return true if MQTT is connected.
-```
-
-Return the number of time onConnectionEstablished has been called since the beginning. Can be useful if you need to monitor the number of times the connection has dropped.
-```c++
-void getConnectionEstablishedCount();
+bool getConnectionEstablishedCount() const { return _connectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
 ```
 
 As ESP8366 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
 ```c++
 void executeDelayed(const long delay, DelayedExecutionCallback callback);
+```
+
+Some useful getters
+```c++
+const char* getMqttClientName();
+const char* getMqttServerIp();
+const short getMqttServerPort();
 ```
 
 ### Connection established callback
@@ -143,4 +158,46 @@ In some special cases, like if you want to handle more than one MQTT connection 
 void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback);
 ```
 See exemple "twoMQTTClientHandling.ino" for more details.
+
+
+### Subscribing to topics
+
+The function `subscribe` allow to subscribe to a specific topic.
+
+For exemple, if you want to subscribe to topic `test/mytopic`, you can do this : 
+```c++
+void onTestMessageReceived(const String& message) {
+  Serial.print("message received from mytopic/test: " + message);
+}
+
+client.subscribe("mytopic/test", onTestMessageReceived);
+```
+
+You can also use lambdas to shorten the code like this : 
+```c++
+client.subscribe("mytopic/test", [](const String& message) {
+  Serial.print("message received from mytopic/test: " + message;
+});
+```
+
+#### Wildcards
+
+This library also handle MQTT topic wilcards. Most of the time, you will want to see what was the original topic when the callback is called. Here is how to do that.
+
+Exemple : Subscribe to "mytopic/wildcardtest/#" and display received topic and message to Serial 
+```c++
+void onMessageReceived(const String& topic, const String& message) {
+  Serial.println(topic + ": " + message);
+}
+
+client.subscribe("mytopic/wildcardtest/#", onMessageReceived);
+```
+
+The same thing with lambdas : 
+```c++
+  client.subscribe("mytopic/wildcardtest/#", [](const String& topic, const String& message) {
+    Serial.println(topic + ": " + message);
+  });
+```
+
 
