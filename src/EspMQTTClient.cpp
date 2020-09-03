@@ -206,7 +206,7 @@ void EspMQTTClient::loop()
   }
 
   // We made a MQTT connection attempt if the waiting delay has ended.
-  else if (isWifiConnected && millis() >= _nextMqttConnectionAttemptMillis)
+  else if (isWifiConnected && _nextMqttConnectionAttemptMillis > 0 && millis() >= _nextMqttConnectionAttemptMillis)
   {
     if(!connectToMqttBroker())
       _nextMqttConnectionAttemptMillis = millis() + _mqttReconnectionAttemptDelay;
@@ -292,23 +292,18 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
 
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
-  // Check the duplicate of the subscription to the topic
-  bool found = false;
-  for (byte i = 0; i < _topicSubscriptionList.size() && !found; i++)
-    found = _topicSubscriptionList[i].topic.equals(topic);
-
-  if (found) 
-  {
-    if (_enableSerialLogs)
-      Serial.printf("MQTT! Subscribed to [%s] already, ignored.\n", topic.c_str());
-    return false;
-  }
-
-  // All checks are passed - do the job
   bool success = _mqttClient.subscribe(topic.c_str());
 
   if(success)
-    _topicSubscriptionList.push_back({ topic, messageReceivedCallback, NULL });
+  {
+    // Add the record to the subscription list only if it does not exists.
+    bool found = false;
+    for (byte i = 0; i < _topicSubscriptionList.size() && !found; i++)
+      found = _topicSubscriptionList[i].topic.equals(topic);
+
+    if(!found)
+      _topicSubscriptionList.push_back({ topic, messageReceivedCallback, NULL });
+  }
   
   if (_enableSerialLogs)
   {
@@ -396,7 +391,7 @@ bool EspMQTTClient::connectToMqttBroker()
   if (_enableSerialLogs)
   {
     if (success) 
-      Serial.printf("ok. (%fs) \n", millis()/1000.0);
+      Serial.printf(" - ok. (%fs) \n", millis()/1000.0);
     else
     {
       Serial.printf("unable to connect (%fs), reason: ", millis()/1000.0);
