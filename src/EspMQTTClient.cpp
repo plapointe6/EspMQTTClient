@@ -55,7 +55,6 @@ EspMQTTClient::EspMQTTClient(
   _nextWifiConnectionAttemptMillis = 500;
 
   // MQTT client
-  _topicSubscriptionListSize = 0;
   _mqttConnected = false;
   _nextMqttConnectionAttemptMillis = 0;
   _mqttReconnectionAttemptDelay = 15 * 1000; // 15 seconds of waiting between each mqtt reconnection attempts by default
@@ -73,7 +72,6 @@ EspMQTTClient::EspMQTTClient(
   // other
   _enableSerialLogs = false;
   _connectionEstablishedCallback = onConnectionEstablished;
-  _delayedExecutionListSize = 0;
   _connectionEstablishedCount = 0;
 }
 
@@ -222,7 +220,7 @@ void EspMQTTClient::loop()
 void EspMQTTClient::onWiFiConnectionEstablished()
 {
     if (_enableSerialLogs)
-      Serial.printf("WiFi: Connected (%fs), ip : %s \n", millis()/1000, WiFi.localIP().toString().c_str());
+      Serial.printf("WiFi: Connected (%fs), ip : %s \n", millis()/1000.0, WiFi.localIP().toString().c_str());
 
     // Config of web updater
     if (_httpServer != NULL)
@@ -240,7 +238,7 @@ void EspMQTTClient::onWiFiConnectionEstablished()
 void EspMQTTClient::onWiFiConnectionLost()
 {
   if (_enableSerialLogs)
-    Serial.printf("WiFi! Lost connection (%fs). \n", millis()/1000);
+    Serial.printf("WiFi! Lost connection (%fs). \n", millis()/1000.0);
 
   // If we handle wifi, we force disconnection to clear the last connection
   if (_wifiSsid != NULL)
@@ -257,11 +255,9 @@ void EspMQTTClient::onMQTTConnectionLost()
 {
   if (_enableSerialLogs)
   {
-    Serial.printf("MQTT! Lost connection (%fs). \n", millis()/1000);
+    Serial.printf("MQTT! Lost connection (%fs). \n", millis()/1000.0);
     Serial.printf("MQTT: Retrying to connect in %i seconds. \n", _mqttReconnectionAttemptDelay / 1000);
   }
-
-  _topicSubscriptionListSize = 0;
 }
 
 
@@ -270,8 +266,13 @@ void EspMQTTClient::onMQTTConnectionLost()
 
 bool EspMQTTClient::setMaxPacketSize(const uint16_t size)
 {
-  if(!_mqttClient.setBufferSize(size) && _enableSerialLogs)
+
+  bool success = _mqttClient.setBufferSize(size);
+
+  if(!success && _enableSerialLogs)
     Serial.println("MQTT! failed to set the max packet size.");
+
+  return success;
 }
 
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
@@ -291,17 +292,9 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
 
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
-  // Check the possibility to add a new topic
-  if (_topicSubscriptionListSize >= MAX_TOPIC_SUBSCRIPTION_LIST_SIZE) 
-  {
-    if (_enableSerialLogs)
-      Serial.println("MQTT! Subscription list is full, ignored.");
-    return false;
-  }
-
   // Check the duplicate of the subscription to the topic
   bool found = false;
-  for (byte i = 0; i < _topicSubscriptionListSize && !found; i++)
+  for (byte i = 0; i < _topicSubscriptionList.size() && !found; i++)
     found = _topicSubscriptionList[i].topic.equals(topic);
 
   if (found) 
@@ -315,7 +308,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   bool success = _mqttClient.subscribe(topic.c_str());
 
   if(success)
-    _topicSubscriptionList[_topicSubscriptionListSize++] = { topic, messageReceivedCallback, NULL };
+    _topicSubscriptionList.push_back({ topic, messageReceivedCallback, NULL });
   
   if (_enableSerialLogs)
   {
@@ -332,7 +325,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTo
 {
   if(subscribe(topic, (MessageReceivedCallback)NULL))
   {
-    _topicSubscriptionList[_topicSubscriptionListSize-1].callbackWithTopic = messageReceivedCallback;
+    _topicSubscriptionList[_topicSubscriptionList.size()-1].callbackWithTopic = messageReceivedCallback;
     return true;
   }
   return false;
@@ -340,56 +333,38 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTo
 
 bool EspMQTTClient::unsubscribe(const String &topic)
 {
-  bool found = false;
-  bool success = false;
-
-  for (byte i = 0; i < _topicSubscriptionListSize; i++)
+  for (int i = 0; i < _topicSubscriptionList.size(); i++)
   {
-    if (!found)
+    if (_topicSubscriptionList[i].topic.equals(topic))
     {
-      if (_topicSubscriptionList[i].topic.equals(topic))
+      if(_mqttClient.unsubscribe(topic.c_str()))
       {
-        found = true;
-        success = _mqttClient.unsubscribe(topic.c_str());
+        _topicSubscriptionList.erase(_topicSubscriptionList.begin() + i);
+        i--;
 
-        if (_enableSerialLogs)
-        {
-          if(success)
-            Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
-          else
-            Serial.println("MQTT! unsubscribe failed");
-        }
+        if(_enableSerialLogs)
+          Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
       }
-    }
+      else
+      {
+        if(_enableSerialLogs)
+          Serial.println("MQTT! unsubscribe failed");
 
-    if (found)
-    {
-      if ((i + 1) < MAX_TOPIC_SUBSCRIPTION_LIST_SIZE)
-        _topicSubscriptionList[i] = _topicSubscriptionList[i + 1];
+        return false;
+      }
     }
   }
 
-  if (found)
-    _topicSubscriptionListSize--;
-  else if (_enableSerialLogs)
-    Serial.println("MQTT! Topic cannot be found to unsubscribe, ignored.");
-
-  return success;
+  return true;
 }
 
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
 {
-  if (_delayedExecutionListSize < MAX_DELAYED_EXECUTION_LIST_SIZE)
-  {
-    DelayedExecutionRecord delayedExecutionRecord;
-    delayedExecutionRecord.targetMillis = millis() + delay;
-    delayedExecutionRecord.callback = callback;
-    
-    _delayedExecutionList[_delayedExecutionListSize] = delayedExecutionRecord;
-    _delayedExecutionListSize++;
-  }
-  else if (_enableSerialLogs)
-    Serial.printf("SYS! The list of delayed functions is full.\n");
+  DelayedExecutionRecord delayedExecutionRecord;
+  delayedExecutionRecord.targetMillis = millis() + delay;
+  delayedExecutionRecord.callback = callback;
+
+  _delayedExecutionList.push_back(delayedExecutionRecord);
 }
 
 
@@ -407,24 +382,24 @@ void EspMQTTClient::connectToWifi()
   WiFi.begin(_wifiSsid, _wifiPassword);
 
   if (_enableSerialLogs)
-    Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", _wifiSsid, millis()/1000);
+    Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", _wifiSsid, millis()/1000.0);
 }
 
 // Try to connect to the MQTT broker and return True if the connection is successfull (blocking)
 bool EspMQTTClient::connectToMqttBroker()
 {
   if (_enableSerialLogs)
-    Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" ... (%fs)", _mqttServerIp, _mqttClientName, millis()/1000);
+    Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" ... (%fs)", _mqttServerIp, _mqttClientName, millis()/1000.0);
 
   bool success = _mqttClient.connect(_mqttClientName, _mqttUsername, _mqttPassword, _mqttLastWillTopic, 0, _mqttLastWillRetain, _mqttLastWillMessage, _mqttCleanSession);
 
   if (_enableSerialLogs)
   {
     if (success) 
-      Serial.printf("ok. (%fs) \n", millis()/1000);
+      Serial.printf("ok. (%fs) \n", millis()/1000.0);
     else
     {
-      Serial.printf("unable to connect (%fs), reason: ", millis()/1000);
+      Serial.printf("unable to connect (%fs), reason: ", millis()/1000.0);
 
       switch (_mqttClient.state())
       {
@@ -468,18 +443,16 @@ bool EspMQTTClient::connectToMqttBroker()
 // Check if there is delayed execution requests to process and execute them if needed.
 void EspMQTTClient::processDelayedExecutionRequests()
 {
-  if (_delayedExecutionListSize > 0)
+  if (_delayedExecutionList.size() > 0)
   {
     unsigned long currentMillis = millis();
 
-    for(byte i = 0 ; i < _delayedExecutionListSize ; i++)
+    for(int i = 0 ; i < _delayedExecutionList.size() ; i++)
     {
       if (_delayedExecutionList[i].targetMillis <= currentMillis)
       {
         _delayedExecutionList[i].callback();
-        for(byte j = i ; j < _delayedExecutionListSize-1 ; j++)
-          _delayedExecutionList[j] = _delayedExecutionList[j + 1];
-        _delayedExecutionListSize--;
+        _delayedExecutionList.erase(_delayedExecutionList.begin() + i);
         i--;
       }
     }
@@ -551,7 +524,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
     Serial.printf("MQTT >> [%s] %s\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
-  for (byte i = 0 ; i < _topicSubscriptionListSize ; i++)
+  for (byte i = 0 ; i < _topicSubscriptionList.size() ; i++)
   {
     if (mqttTopicMatch(_topicSubscriptionList[i].topic, String(topic)))
     {

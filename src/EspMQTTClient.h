@@ -2,6 +2,7 @@
 #define ESP_MQTT_CLIENT_H
 
 #include <PubSubClient.h>
+#include <vector>
 
 #ifdef ESP8266
 
@@ -24,9 +25,6 @@
   #define ESPHTTPUpdateServer ESP32HTTPUpdateServer
 
 #endif
-
-#define MAX_TOPIC_SUBSCRIPTION_LIST_SIZE 10
-#define MAX_DELAYED_EXECUTION_LIST_SIZE 10
 
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
@@ -66,8 +64,7 @@ private:
     MessageReceivedCallback callback;
     MessageReceivedCallbackWithTopic callbackWithTopic;
   };
-  TopicSubscriptionRecord _topicSubscriptionList[MAX_TOPIC_SUBSCRIPTION_LIST_SIZE];
-  byte _topicSubscriptionListSize;
+  std::vector<TopicSubscriptionRecord> _topicSubscriptionList;
 
   // HTTP update server related
   char* _updateServerAddress;
@@ -81,8 +78,7 @@ private:
     unsigned long targetMillis;
     DelayedExecutionCallback callback;
   };
-  DelayedExecutionRecord _delayedExecutionList[MAX_DELAYED_EXECUTION_LIST_SIZE];
-  byte _delayedExecutionListSize;
+  std::vector<DelayedExecutionRecord> _delayedExecutionList;
 
   // General behaviour related
   ConnectionEstablishedCallback _connectionEstablishedCallback;
