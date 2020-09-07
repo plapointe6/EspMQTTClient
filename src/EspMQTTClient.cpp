@@ -133,6 +133,17 @@ void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message
 
 void EspMQTTClient::loop()
 {
+  static bool firstLoopCall = true;
+
+  // When it's the first loop call, reset the wifi radio and schedule the wifi connection
+  if(firstLoopCall && _wifiSsid != NULL)
+  {
+    WiFi.disconnect(true);
+    _nextWifiConnectionAttemptMillis = millis() + 500;
+    firstLoopCall = false;
+    return;
+  }
+
   // Delayed execution requests handling
   processDelayedExecutionRequests();
 
