@@ -66,6 +66,7 @@ EspMQTTClient::EspMQTTClient(
   _mqttLastWillRetain = false;
   _mqttCleanSession = true;
   _mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
+  _failedMQTTConnectionAttemptCount = 0;
 
   // Web updater
   _updateServerAddress = NULL;
@@ -241,9 +242,27 @@ void EspMQTTClient::loop()
   else if (isWifiConnected && _nextMqttConnectionAttemptMillis > 0 && millis() >= _nextMqttConnectionAttemptMillis)
   {
     if(!connectToMqttBroker())
+    {
       _nextMqttConnectionAttemptMillis = millis() + _mqttReconnectionAttemptDelay;
+      _mqttClient.disconnect();
+      _failedMQTTConnectionAttemptCount++;
+
+      if (_enableSerialLogs)
+        Serial.printf("MQTT!: Failed MQTT connection count: %i \n", _failedMQTTConnectionAttemptCount);
+
+      if(_failedMQTTConnectionAttemptCount >= 8) // Will reset after 8 failed attempt (2 minutes of retry)
+      {
+        if (_enableSerialLogs)
+          Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting ...");
+
+        ESP.reset();
+      }
+    }
     else
+    {
+      _failedMQTTConnectionAttemptCount = 0;
       _nextMqttConnectionAttemptMillis = 0;
+    }
   }
 
   _mqttConnected = isMqttConnected;
@@ -312,6 +331,15 @@ bool EspMQTTClient::setMaxPacketSize(const uint16_t size)
 
 bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
 {
+  // Do not try to publish if MQTT is not connected.
+  if(!isConnected())
+  {
+    if (_enableSerialLogs)
+      Serial.println("MQTT! Trying to publish when disconnected, skipping.");
+
+    return false;
+  }
+
   bool success = _mqttClient.publish(topic.c_str(), payload.c_str(), retain);
 
   if (_enableSerialLogs) 
@@ -327,6 +355,15 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
 
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback)
 {
+  // Do not try to subscribe if MQTT is not connected.
+  if(!isConnected())
+  {
+    if (_enableSerialLogs)
+      Serial.println("MQTT! Trying to subscribe when disconnected, skipping.");
+
+    return false;
+  }
+
   bool success = _mqttClient.subscribe(topic.c_str());
 
   if(success)
@@ -363,6 +400,15 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTo
 
 bool EspMQTTClient::unsubscribe(const String &topic)
 {
+  // Do not try to unsubscribe if MQTT is not connected.
+  if(!isConnected())
+  {
+    if (_enableSerialLogs)
+      Serial.println("MQTT! Trying to unsubscribe when disconnected, skipping.");
+
+    return false;
+  }
+
   for (int i = 0; i < _topicSubscriptionList.size(); i++)
   {
     if (_topicSubscriptionList[i].topic.equals(topic))

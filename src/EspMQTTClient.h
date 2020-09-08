@@ -59,6 +59,7 @@ private:
   char* _mqttLastWillTopic;
   char* _mqttLastWillMessage;
   bool _mqttLastWillRetain;
+  unsigned int _failedMQTTConnectionAttemptCount;
 
   PubSubClient _mqttClient;
 
