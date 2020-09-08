@@ -250,10 +250,19 @@ void EspMQTTClient::loop()
       if (_enableSerialLogs)
         Serial.printf("MQTT!: Failed MQTT connection count: %i \n", _failedMQTTConnectionAttemptCount);
 
-      if(_failedMQTTConnectionAttemptCount >= 8) // Will reset after 8 failed attempt (2 minutes of retry)
+      if(_failedMQTTConnectionAttemptCount == 4)
       {
         if (_enableSerialLogs)
-          Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting ...");
+          Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting WiFi ...");
+
+        WiFi.disconnect(true);
+        MDNS.end();
+        _nextWifiConnectionAttemptMillis = millis() + 500;
+      }
+      else if(_failedMQTTConnectionAttemptCount == 8) // Will reset after 8 failed attempt (2 minutes of retry)
+      {
+        if (_enableSerialLogs)
+          Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting board ...");
 
         ESP.reset();
       }
