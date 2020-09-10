@@ -10,7 +10,7 @@
   #include <ESP8266WebServer.h>
   #include <ESP8266mDNS.h>
   #include <ESP8266HTTPUpdateServer.h>
-  
+
   #define WebServer ESP8266WebServer
   #define ESPmDNS ESP8266mDNS
   #define ESPHTTPUpdateServer ESP8266HTTPUpdateServer
@@ -33,7 +33,7 @@ typedef std::function<void(const String &message)> MessageReceivedCallback;
 typedef std::function<void(const String &topicStr, const String &message)> MessageReceivedCallbackWithTopic;
 typedef std::function<void()> DelayedExecutionCallback;
 
-class EspMQTTClient 
+class EspMQTTClient
 {
 private:
   // Wifi related
@@ -91,9 +91,9 @@ private:
 public:
   // Wifi + MQTT with no MQTT authentification
   EspMQTTClient(
-    const char* wifiSsid, 
-    const char* wifiPassword, 
-    const char* mqttServerIp, 
+    const char* wifiSsid,
+    const char* wifiPassword,
+    const char* mqttServerIp,
     const char* mqttClientName = "ESP8266",
     const short mqttServerPort = 1883);
 
@@ -148,19 +148,22 @@ public:
   inline bool isWifiConnected() const { return _wifiConnected; }; // Return true if wifi is connected
   inline bool isMqttConnected() const { return _mqttConnected; }; // Return true if mqtt is connected
   inline bool getConnectionEstablishedCount() const { return _connectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
-  
+
   inline const char* getMqttClientName() { return _mqttClientName; };
   inline const char* getMqttServerIp() { return _mqttServerIp; };
   inline const short getMqttServerPort() { return _mqttServerPort; };
 
   // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
-  inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; }; 
+  inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; };
 
-  // Allow to set the minimum delay between each MQTT reconnection attempt. 15 seconds by default. 
+  // Allow to set the minimum delay between each MQTT reconnection attempt. 15 seconds by default.
   inline void setMqttReconnectionAttemptDelay(const unsigned int milliseconds) { _mqttReconnectionAttemptDelay = milliseconds; };
 
-  // Allow to set the minimum delay between each WiFi reconnection attempt. 60 seconds by default. 
+  // Allow to set the minimum delay between each WiFi reconnection attempt. 60 seconds by default.
   inline void setWifiReconnectionAttemptDelay(const unsigned int milliseconds) { _wifiReconnectionAttemptDelay = milliseconds; };
+
+  // Allow to set client setHostname manually
+  inline void setMqttClientName(const char* name) { _mqttClientName = name; };
 
 private:
   void onWiFiConnectionEstablished();
