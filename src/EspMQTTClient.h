@@ -140,6 +140,7 @@ public:
   bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
   void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
+  inline void setMqttClientName(const char* name) { _mqttClientName = name; }; // Allow to set client name manually (must be done in setup(), else it will not work.)
 
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
@@ -161,9 +162,6 @@ public:
 
   // Allow to set the minimum delay between each WiFi reconnection attempt. 60 seconds by default.
   inline void setWifiReconnectionAttemptDelay(const unsigned int milliseconds) { _wifiReconnectionAttemptDelay = milliseconds; };
-
-  // Allow to set client setHostname manually
-  inline void setMqttClientName(const char* name) { _mqttClientName = name; };
 
 private:
   void onWiFiConnectionEstablished();
