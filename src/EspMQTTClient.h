@@ -87,6 +87,7 @@ private:
   // General behaviour related
   ConnectionEstablishedCallback _connectionEstablishedCallback;
   bool _enableSerialLogs;
+  bool _drasticResetOnConnectionFailures;
   unsigned int _connectionEstablishedCount; // Incremented before each _connectionEstablishedCallback call
 
 public:
@@ -130,6 +131,7 @@ public:
   void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to _mqttUsername and _mqttPassword
   void enableMQTTPersistence(); // Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
   void enableLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
+  void enableDrasticResetOnConnectionFailures() {_drasticResetOnConnectionFailures = true;} // Can be usefull in special cases where the ESP board hang and need resetting (#59)
 
   // Main loop, to call at each sketch loop()
   void loop();
