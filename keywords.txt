@@ -17,6 +17,7 @@ enableHTTPWebUpdater    KEYWORD2
 enableHTTPWebUpdater    KEYWORD2
 enableMQTTPersistence   KEYWORD2
 enableLastWillMessage   KEYWORD2
+enableDrasticResetOnConnectionFailures KEYWORD2
 
 loop()                  KEYWORD2
 
@@ -26,6 +27,7 @@ subscribe               KEYWORD2
 subscribe               KEYWORD2
 unsubscribe             KEYWORD2
 setKeepAlive            KEYWORD2
+setMqttClientName       KEYWORD2
 
 executeDelayed          KEYWORD2
 
