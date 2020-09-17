@@ -269,7 +269,11 @@ void EspMQTTClient::loop()
         if (_enableSerialLogs)
           Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting board ...");
 
-        ESP.reset();
+        #ifdef ESP8266
+          ESP.reset();
+        #else
+          ESP.restart();
+        #endif
       }
     }
     else
