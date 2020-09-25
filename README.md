@@ -140,7 +140,7 @@ bool isMqttConnected(); // Return true if MQTT is connected.
 bool getConnectionEstablishedCount() // Return the number of time onConnectionEstablished has been called since the beginning.
 ```
 
-As ESP8366 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
+As ESP8266 does not like to be interrupted too long with the delay() function, this function will allow a delayed execution of a function without interrupting the sketch.
 ```c++
 void executeDelayed(const long delay, DelayedExecutionCallback callback);
 ```
