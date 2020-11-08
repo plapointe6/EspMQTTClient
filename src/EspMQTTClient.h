@@ -37,6 +37,7 @@ class EspMQTTClient
 {
 private:
   // Wifi related
+  bool _handleWiFi;
   bool _wifiConnected;
   bool _connectingToWifi;
   unsigned long _lastWifiConnectiomAttemptMillis;
@@ -139,8 +140,8 @@ public:
   // MQTT related
   bool setMaxPacketSize(const uint16_t size); // Pubsubclient >= 2.8; override the default value of MQTT_MAX_PACKET_SIZE
   bool publish(const String &topic, const String &payload, bool retain = false);
-  bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
-  bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback);
+  bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback, uint8_t qos = 0);
+  bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback, uint8_t qos = 0);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
   void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
   inline void setMqttClientName(const char* name) { _mqttClientName = name; }; // Allow to set client name manually (must be done in setup(), else it will not work.)
@@ -167,6 +168,8 @@ public:
   inline void setWifiReconnectionAttemptDelay(const unsigned int milliseconds) { _wifiReconnectionAttemptDelay = milliseconds; };
 
 private:
+  bool handleWiFi();
+  bool handleMQTT();
   void onWiFiConnectionEstablished();
   void onWiFiConnectionLost();
   void onMQTTConnectionEstablished();

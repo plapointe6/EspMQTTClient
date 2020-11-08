@@ -85,7 +85,7 @@ void loop();
 Basic functions for MQTT communications.
 ```c++
 bool publish(const String &topic, const String &payload, bool retain = false);
-bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback);
+bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback, uint8_t qos = 0);
 bool unsubscribe(const String &topic);
 ```
 
