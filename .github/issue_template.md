@@ -1,8 +1,8 @@
 ## Description of the problem
-<!--- The more details there is, the easyer for me it will be to work on it. -->
+<!--- The more details there is, the easier for me it will be to work on it. -->
 
 ## Versions
-<-- Before opening an issue, please ensure that everything is up to date and indicate the version you get after updating each of these libraries -->
+<!-- Before opening an issue, please ensure that everything is up to date and indicate the version you get after updating each of these libraries -->
 - ESPMQTTClient lib: -put version number here-
 - PubSubClient lib: -put version number here-
 - Arduino ESP32 / ESP8622 core: -put version number here- (To update it go to the arduino board manager and update ESP32 / ESP8266)
