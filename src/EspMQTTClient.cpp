@@ -643,14 +643,14 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
 {
   // Convert the payload into a String
   // First, We ensure that we dont bypass the maximum size of the PubSubClient library buffer that originated the payload
-  // This buffer has a maximum length of MQTT_MAX_PACKET_SIZE and the payload begin at "headerSize + topicLength + 1"
+  // This buffer has a maximum length of _mqttClient.getBufferSize() and the payload begin at "headerSize + topicLength + 1"
   unsigned int strTerminationPos;
-  if (strlen(topic) + length + 9 >= MQTT_MAX_PACKET_SIZE)
+  if (strlen(topic) + length + 9 >= _mqttClient.getBufferSize())
   {
     strTerminationPos = length - 1;
 
     if (_enableSerialLogs)
-      Serial.print("MQTT! Your message may be truncated, please change MQTT_MAX_PACKET_SIZE of PubSubClient.h to a higher value.\n");
+      Serial.print("MQTT! Your message may be truncated, please set setMaxPacketSize() to a higher value.\n");
   }
   else
     strTerminationPos = length;
