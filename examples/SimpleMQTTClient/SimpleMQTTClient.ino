@@ -38,7 +38,7 @@ void onConnectionEstablished()
 
   // Subscribe to "mytopic/wildcardtest/#" and display received message to Serial
   client.subscribe("mytopic/wildcardtest/#", [](const String & topic, const String & payload) {
-    Serial.println(topic + ": " + payload);
+    Serial.println("(From wildcard) topic: " + topic + ", payload: " + payload);
   });
 
   // Publish a message to "mytopic/test"
@@ -46,7 +46,7 @@ void onConnectionEstablished()
 
   // Execute delayed instructions
   client.executeDelayed(5 * 1000, []() {
-    client.publish("mytopic/test", "This is a message sent 5 seconds later");
+    client.publish("mytopic/wildcardtest/test123", "This is a message sent 5 seconds later");
   });
 }
 

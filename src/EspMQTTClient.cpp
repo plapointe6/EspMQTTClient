@@ -450,7 +450,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
 
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback, uint8_t qos)
 {
-  if(subscribe(topic, (MessageReceivedCallback)NULL), qos)
+  if(subscribe(topic, (MessageReceivedCallback)NULL, qos))
   {
     _topicSubscriptionList[_topicSubscriptionList.size()-1].callbackWithTopic = messageReceivedCallback;
     return true;
