@@ -11,6 +11,7 @@ You just need to provide your credentials and it will manage the following thing
 - Provide a function to enable printing of useful debug information related to MQTT and Wifi connections.
 - Provide some other useful utilities for MQTT and Wifi management.
 - Provide a function to enable an HTTP Update server secured by a password to allow remote update.
+- Provide a function to enable OTA secured by a password to allow remote update.
 
 ## Dependency
 
