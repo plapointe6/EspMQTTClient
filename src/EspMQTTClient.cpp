@@ -73,6 +73,7 @@ EspMQTTClient::EspMQTTClient(
   _updateServerAddress = NULL;
   _httpServer = NULL;
   _httpUpdater = NULL;
+  _enableOTA = false;
 
   // other
   _enableSerialLogs = false;
@@ -119,6 +120,28 @@ void EspMQTTClient::enableHTTPWebUpdater(const char* address)
     enableHTTPWebUpdater(_mqttUsername, _mqttPassword, address);
 }
 
+
+void EspMQTTClient::enableOTA(const char* password, const uint16_t port)
+{
+  _enableOTA = true;
+
+  if (_mqttClientName) {
+    ArduinoOTA.setHostname(_mqttClientName);
+  }
+
+  if (password) {
+    ArduinoOTA.setPassword(password);
+  } else if( _mqttPassword ) {
+    ArduinoOTA.setPassword(_mqttPassword);
+  }
+
+  // Else it will use defaut OTA port
+  if (port) {
+    ArduinoOTA.setPort(port);
+  }
+}
+
+
 void EspMQTTClient::enableMQTTPersistence()
 {
   _mqttCleanSession = false;
@@ -129,6 +152,11 @@ void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message
   _mqttLastWillTopic = (char*)topic;
   _mqttLastWillMessage = (char*)message;
   _mqttLastWillRetain = retain;
+}
+
+void EspMQTTClient::enableLastWillMessage(const String &topic, const String &message, const bool retain )
+{
+  enableLastWillMessage(topic.c_str(), message.c_str(), retain);
 }
 
 
@@ -219,6 +247,10 @@ bool EspMQTTClient::handleWiFi()
       #ifdef ESP8266
         MDNS.update(); // We need to do this only for ESP8266
       #endif
+    }
+
+    if (_enableOTA) {
+      ArduinoOTA.handle();
     }
   }
 
@@ -343,6 +375,12 @@ void EspMQTTClient::onWiFiConnectionEstablished()
 
       if (_enableSerialLogs)
         Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
+    }
+
+    // No matter if it has already been called (becasue for example we had wifi disconnection)
+    // OTA Lib will do all the check needed
+    if (_enableOTA) {
+      ArduinoOTA.begin();
     }
 }
 
