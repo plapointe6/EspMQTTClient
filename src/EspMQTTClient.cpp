@@ -499,6 +499,13 @@ void EspMQTTClient::setKeepAlive(uint16_t keepAliveSeconds)
   _mqttClient.setKeepAlive(keepAliveSeconds);
 }
 
+void EspMQTTClient::setWifiCredentials(const char* wifiSsid, const char* wifiPassword)
+{
+  _wifiSsid = wifiSsid;
+  _wifiPassword = wifiPassword;
+  _handleWiFi = true;
+}
+
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
 {
   DelayedExecutionRecord delayedExecutionRecord;
