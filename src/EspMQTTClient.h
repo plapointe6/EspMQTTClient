@@ -156,7 +156,7 @@ public:
 
   inline const char* getMqttClientName() { return _mqttClientName; };
   inline const char* getMqttServerIp() { return _mqttServerIp; };
-  inline const short getMqttServerPort() { return _mqttServerPort; };
+  inline short getMqttServerPort() { return _mqttServerPort; };
 
   // Default to onConnectionEstablished, you might want to override this for special cases like two MQTT connections in the same sketch
   inline void setOnConnectionEstablishedCallback(ConnectionEstablishedCallback callback) { _connectionEstablishedCallback = callback; };
