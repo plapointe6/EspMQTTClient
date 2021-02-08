@@ -430,7 +430,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   {
     // Add the record to the subscription list only if it does not exists.
     bool found = false;
-    for (byte i = 0; i < _topicSubscriptionList.size() && !found; i++)
+    for (std::size_t i = 0; i < _topicSubscriptionList.size() && !found; i++)
       found = _topicSubscriptionList[i].topic.equals(topic);
 
     if(!found)
@@ -469,7 +469,7 @@ bool EspMQTTClient::unsubscribe(const String &topic)
     return false;
   }
 
-  for (int i = 0; i < _topicSubscriptionList.size(); i++)
+  for (std::size_t i = 0; i < _topicSubscriptionList.size(); i++)
   {
     if (_topicSubscriptionList[i].topic.equals(topic))
     {
@@ -595,7 +595,7 @@ void EspMQTTClient::processDelayedExecutionRequests()
   {
     unsigned long currentMillis = millis();
 
-    for(int i = 0 ; i < _delayedExecutionList.size() ; i++)
+    for (std::size_t i = 0 ; i < _delayedExecutionList.size() ; i++)
     {
       if (_delayedExecutionList[i].targetMillis <= currentMillis)
       {
@@ -672,7 +672,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsi
     Serial.printf("MQTT >> [%s] %s\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
-  for (byte i = 0 ; i < _topicSubscriptionList.size() ; i++)
+  for (std::size_t i = 0 ; i < _topicSubscriptionList.size() ; i++)
   {
     if (mqttTopicMatch(_topicSubscriptionList[i].topic, String(topic)))
     {
