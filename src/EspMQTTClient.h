@@ -146,6 +146,9 @@ public:
   void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
   inline void setMqttClientName(const char* name) { _mqttClientName = name; }; // Allow to set client name manually (must be done in setup(), else it will not work.)
 
+  // Wifi related
+  void setWifiCredentials(const char* wifiSsid, const char* wifiPassword);
+
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
 
