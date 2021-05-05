@@ -254,7 +254,7 @@ bool EspMQTTClient::handleWiFi()
 
 bool EspMQTTClient::handleMQTT()
 {
-   // PubSubClient main loop() call
+  // PubSubClient main loop() call
   _mqttClient.loop();
 
   // Get the current connextion status
@@ -546,7 +546,7 @@ bool EspMQTTClient::connectToMqttBroker()
 {
   bool success = false;
 
-  if (_mqttServerIp != 0)
+  if (_mqttServerIp != nullptr && strlen(_mqttServerIp) > 0)
   {
     if (_enableSerialLogs)
       Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" and username \"%s\" ... (%fs) ", _mqttServerIp, _mqttClientName, _mqttUsername, millis()/1000.0);
