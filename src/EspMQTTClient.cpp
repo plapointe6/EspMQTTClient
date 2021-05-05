@@ -5,8 +5,8 @@
 
 // default constructor
 EspMQTTClient::EspMQTTClient(
-  const char* mqttClientName,
-  const short mqttServerPort) :
+  const short mqttServerPort,
+  const char* mqttClientName) :
   EspMQTTClient(nullptr, mqttServerPort, mqttClientName)
 {
 }
