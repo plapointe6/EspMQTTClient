@@ -3,6 +3,14 @@
 
 // =============== Constructor / destructor ===================
 
+// default constructor
+EspMQTTClient::EspMQTTClient(
+  const char* mqttClientName,
+  const short mqttServerPort) :
+  EspMQTTClient(nullptr, mqttServerPort, mqttClientName)
+{
+}
+
 // MQTT only (no wifi connection attempt)
 EspMQTTClient::EspMQTTClient(
   const char* mqttServerIp,
@@ -246,7 +254,6 @@ bool EspMQTTClient::handleWiFi()
 
 bool EspMQTTClient::handleMQTT()
 {
-  // PubSubClient main lopp() call
   _mqttClient.loop();
 
   // Get the current connextion status
@@ -536,10 +543,23 @@ void EspMQTTClient::connectToWifi()
 // Try to connect to the MQTT broker and return True if the connection is successfull (blocking)
 bool EspMQTTClient::connectToMqttBroker()
 {
-  if (_enableSerialLogs)
-    Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" ... (%fs)", _mqttServerIp, _mqttClientName, millis()/1000.0);
+  bool success = false;
 
-  bool success = _mqttClient.connect(_mqttClientName, _mqttUsername, _mqttPassword, _mqttLastWillTopic, 0, _mqttLastWillRetain, _mqttLastWillMessage, _mqttCleanSession);
+  if (_mqttServerIp != 0)
+  {
+    if (_enableSerialLogs)
+      Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" and username \"%s\" ... (%fs) ", _mqttServerIp, _mqttClientName, _mqttUsername, millis()/1000.0);
+
+    // explicitly set the server/port here in case they were not provided in the constructor
+    _mqttClient.setServer(_mqttServerIp, _mqttServerPort);
+    success = _mqttClient.connect(_mqttClientName, _mqttUsername, _mqttPassword, _mqttLastWillTopic, 0, _mqttLastWillRetain, _mqttLastWillMessage, _mqttCleanSession);
+  }
+  else
+  {
+    if (_enableSerialLogs)
+      Serial.printf("MQTT: Broker server ip is not set, not connecting (%fs)\n", millis()/1000.0);
+    success = false;
+  }
 
   if (_enableSerialLogs)
   {
