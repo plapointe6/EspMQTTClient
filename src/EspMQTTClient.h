@@ -55,7 +55,7 @@ private:
   const char* _mqttUsername;
   const char* _mqttPassword;
   const char* _mqttClientName;
-  const short _mqttServerPort;
+  short _mqttServerPort;
   bool _mqttCleanSession;
   char* _mqttLastWillTopic;
   char* _mqttLastWillMessage;
@@ -92,6 +92,10 @@ private:
   unsigned int _connectionEstablishedCount; // Incremented before each _connectionEstablishedCallback call
 
 public:
+  EspMQTTClient(
+    const short mqttServerPort = 1883,       // port and client name are swapped here to prevent a collision
+    const char* mqttClientName = "ESP8266"); // with the MQTT w/o auth constructor
+
   // Wifi + MQTT with no MQTT authentification
   EspMQTTClient(
     const char* wifiSsid,
@@ -145,6 +149,12 @@ public:
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
   void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
   inline void setMqttClientName(const char* name) { _mqttClientName = name; }; // Allow to set client name manually (must be done in setup(), else it will not work.)
+  inline void setMqttServer(const char* server, const char* username = "", const char* password = "", const short port = 1883) { // Allow setting the MQTT info manually (must be done in setup())
+    _mqttServerIp   = server;
+    _mqttUsername   = username;
+    _mqttPassword   = password;
+    _mqttServerPort = port;
+  };
 
   // Wifi related
   void setWifiCredentials(const char* wifiSsid, const char* wifiPassword);
