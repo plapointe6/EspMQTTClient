@@ -254,13 +254,14 @@ bool EspMQTTClient::handleWiFi()
 
 bool EspMQTTClient::handleMQTT()
 {
+   // PubSubClient main loop() call
   _mqttClient.loop();
 
   // Get the current connextion status
   bool isMqttConnected = (isWifiConnected() && _mqttClient.connected());
   
 
-  /***** Detect ans handle the current MQTT handling state *****/
+  /***** Detect and handle the current MQTT handling state *****/
 
   // Connection established
   if (isMqttConnected && !_mqttConnected)
