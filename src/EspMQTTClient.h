@@ -192,7 +192,7 @@ private:
   bool connectToMqttBroker();
   void processDelayedExecutionRequests();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
-  void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length);
+  void mqttMessageReceivedCallback(char* topic, uint8_t* payload, unsigned int length);
 };
 
 #endif

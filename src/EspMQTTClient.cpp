@@ -74,7 +74,7 @@ EspMQTTClient::EspMQTTClient(
   _mqttLastWillMessage = 0;
   _mqttLastWillRetain = false;
   _mqttCleanSession = true;
-  _mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
+  _mqttClient.setCallback([this](char* topic, uint8_t* payload, unsigned int length) {this->mqttMessageReceivedCallback(topic, payload, length);});
   _failedMQTTConnectionAttemptCount = 0;
 
   // Web updater
@@ -667,7 +667,7 @@ bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2)
   return false;
 }
 
-void EspMQTTClient::mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length)
+void EspMQTTClient::mqttMessageReceivedCallback(char* topic, uint8_t* payload, unsigned int length)
 {
   // Convert the payload into a String
   // First, We ensure that we dont bypass the maximum size of the PubSubClient library buffer that originated the payload
