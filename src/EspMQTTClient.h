@@ -1,6 +1,7 @@
 #ifndef ESP_MQTT_CLIENT_H
 #define ESP_MQTT_CLIENT_H
 
+#include <ArduinoOTA.h>
 #include <PubSubClient.h>
 #include <vector>
 
@@ -11,9 +12,10 @@
   #include <ESP8266mDNS.h>
   #include <ESP8266HTTPUpdateServer.h>
 
-  #define WebServer ESP8266WebServer
-  #define ESPmDNS ESP8266mDNS
+  #define DEFAULT_MQTT_CLIENT_NAME "ESP8266"
   #define ESPHTTPUpdateServer ESP8266HTTPUpdateServer
+  #define ESPmDNS ESP8266mDNS
+  #define WebServer ESP8266WebServer
 
 #else // for ESP32
 
@@ -22,6 +24,7 @@
   #include <ESPmDNS.h>
   #include "ESP32HTTPUpdateServer.h"
 
+  #define DEFAULT_MQTT_CLIENT_NAME "ESP32"
   #define ESPHTTPUpdateServer ESP32HTTPUpdateServer
 
 #endif
@@ -71,12 +74,13 @@ private:
   };
   std::vector<TopicSubscriptionRecord> _topicSubscriptionList;
 
-  // HTTP update server related
+  // HTTP/OTA update related
   char* _updateServerAddress;
   char* _updateServerUsername;
   char* _updateServerPassword;
   WebServer* _httpServer;
   ESPHTTPUpdateServer* _httpUpdater;
+  bool _enableOTA;
 
   // Delayed execution related
   struct DelayedExecutionRecord {
@@ -93,40 +97,41 @@ private:
 
 public:
   EspMQTTClient(
-    const short mqttServerPort = 1883,       // port and client name are swapped here to prevent a collision
-    const char* mqttClientName = "ESP8266"); // with the MQTT w/o auth constructor
+    // port and client name are swapped here to prevent a collision with the MQTT w/o auth constructor
+    const short mqttServerPort = 1883,
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME);
 
-  // Wifi + MQTT with no MQTT authentification
+  /// Wifi + MQTT with no MQTT authentification
   EspMQTTClient(
     const char* wifiSsid,
     const char* wifiPassword,
     const char* mqttServerIp,
-    const char* mqttClientName = "ESP8266",
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME,
     const short mqttServerPort = 1883);
 
-  // Wifi + MQTT with MQTT authentification
+  /// Wifi + MQTT with MQTT authentification
   EspMQTTClient(
     const char* wifiSsid,
     const char* wifiPassword,
     const char* mqttServerIp,
     const char* mqttUsername,
     const char* mqttPassword,
-    const char* mqttClientName = "ESP8266",
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME,
     const short mqttServerPort = 1883);
 
-  // Only MQTT handling (no wifi), with MQTT authentification
+  /// Only MQTT handling (no wifi), with MQTT authentification
   EspMQTTClient(
     const char* mqttServerIp,
     const short mqttServerPort,
     const char* mqttUsername,
     const char* mqttPassword,
-    const char* mqttClientName = "ESP8266");
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME);
 
-  // Only MQTT handling without MQTT authentification
+  /// Only MQTT handling without MQTT authentification
   EspMQTTClient(
     const char* mqttServerIp,
     const short mqttServerPort,
-    const char* mqttClientName = "ESP8266");
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME);
 
   ~EspMQTTClient();
 
@@ -134,11 +139,12 @@ public:
   void enableDebuggingMessages(const bool enabled = true); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
   void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
   void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to _mqttUsername and _mqttPassword
+  void enableOTA(const char *password = NULL, const uint16_t port = 0); // Activate OTA updater, must be set before the first loop() call.
   void enableMQTTPersistence(); // Tell the broker to establish a persistent connection. Disabled by default. Must be called before the first loop() execution
   void enableLastWillMessage(const char* topic, const char* message, const bool retain = false); // Must be set before the first loop() call.
   void enableDrasticResetOnConnectionFailures() {_drasticResetOnConnectionFailures = true;} // Can be usefull in special cases where the ESP board hang and need resetting (#59)
 
-  // Main loop, to call at each sketch loop()
+  /// Main loop, to call at each sketch loop()
   void loop();
 
   // MQTT related
