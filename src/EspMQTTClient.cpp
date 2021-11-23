@@ -572,7 +572,12 @@ bool EspMQTTClient::connectToMqttBroker()
   if (_mqttServerIp != nullptr && strlen(_mqttServerIp) > 0)
   {
     if (_enableSerialLogs)
-      Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" and username \"%s\" ... (%fs) ", _mqttServerIp, _mqttClientName, _mqttUsername, millis()/1000.0);
+    {
+      if (_mqttUsername)
+        Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" and username \"%s\" ... (%fs)", _mqttServerIp, _mqttClientName, _mqttUsername, millis()/1000.0);
+      else
+        Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" ... (%fs)", _mqttServerIp, _mqttClientName, millis()/1000.0);
+    }
 
     // explicitly set the server/port here in case they were not provided in the constructor
     _mqttClient.setServer(_mqttServerIp, _mqttServerPort);
