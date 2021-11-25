@@ -317,7 +317,7 @@ bool EspMQTTClient::handleMQTT()
         Serial.printf("MQTT!: Failed MQTT connection count: %i \n", _failedMQTTConnectionAttemptCount);
 
       // When there is too many failed attempt, sometimes it help to reset the WiFi connection or to restart the board.
-      if(_failedMQTTConnectionAttemptCount == 8)
+      if(_handleWiFi && _failedMQTTConnectionAttemptCount == 8)
       {
         if (_enableSerialLogs)
           Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting WiFi ...");
