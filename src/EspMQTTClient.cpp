@@ -171,7 +171,7 @@ bool EspMQTTClient::_handleMQTT() {
   _mqttClient.loop();
 
   // Get the current connection status
-  bool isMqttConnected = (isWifiConnected() && _mqttClient.connected());
+  bool isMqttConnected = _mqttClient.connected() && (!_wifiConfigured || _mqttClient.connected());
 
   // Connection established
   if (isMqttConnected && !_mqttConnected) {
