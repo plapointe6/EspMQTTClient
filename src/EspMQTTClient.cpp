@@ -420,7 +420,7 @@ bool EspMQTTClient::setMaxPacketSize(const uint16_t size)
   return success;
 }
 
-bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
+bool EspMQTTClient::publish(const char* topic, const uint8_t* payload, unsigned int plength, bool retain)
 {
   // Do not try to publish if MQTT is not connected.
   if(!isConnected())
@@ -431,17 +431,23 @@ bool EspMQTTClient::publish(const String &topic, const String &payload, bool ret
     return false;
   }
 
-  bool success = _mqttClient.publish(topic.c_str(), payload.c_str(), retain);
+  bool success = _mqttClient.publish(topic, payload, plength, retain);
 
   if (_enableSerialLogs) 
   {
     if(success)
-      Serial.printf("MQTT << [%s] %s\n", topic.c_str(), payload.c_str());
+      Serial.printf("MQTT << [%s] %s\n", topic, payload);
     else
       Serial.println("MQTT! publish failed, is the message too long ? (see setMaxPacketSize())"); // This can occurs if the message is too long according to the maximum defined in PubsubClient.h
   }
 
   return success;
+}
+
+
+bool EspMQTTClient::publish(const String &topic, const String &payload, bool retain)
+{
+  return publish(topic.c_str(), (const uint8_t*) payload.c_str(), payload.length(), retain);
 }
 
 bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback, uint8_t qos)
