@@ -49,8 +49,6 @@ EspMQTTClient::EspMQTTClient(
   const char* mqttPassword,
   const char* mqttClientName,
   const short mqttServerPort) :
-  _wifiSsid(wifiSsid),
-  _wifiPassword(wifiPassword),
   _mqttServerIp(mqttServerIp),
   _mqttUsername(mqttUsername),
   _mqttPassword(mqttPassword),
@@ -59,11 +57,9 @@ EspMQTTClient::EspMQTTClient(
   _mqttClient(mqttServerIp, mqttServerPort, _wifiClient)
 {
   // WiFi connection
-  _handleWiFi = (wifiSsid != NULL);
-  _wifiConnected = false;
-  _connectingToWifi = false;
+  addWifiCredentials(wifiSsid, wifiPassword);
   _nextWifiConnectionAttemptMillis = 500;
-  _lastWifiConnectiomAttemptMillis = 0;
+  _lastWifiConnectionAttemptMillis = 0;
   _wifiReconnectionAttemptDelay = 60 * 1000;
 
   // MQTT client
@@ -182,7 +178,7 @@ bool EspMQTTClient::handleWiFi()
 {
   // When it's the first call, reset the wifi radio and schedule the wifi connection
   static bool firstLoopCall = true;
-  if(_handleWiFi && firstLoopCall)
+  if(weHandleWifi() && firstLoopCall)
   {
     WiFi.disconnect(true);
     _nextWifiConnectionAttemptMillis = millis() + 500;
@@ -197,10 +193,12 @@ bool EspMQTTClient::handleWiFi()
   /***** Detect ans handle the current WiFi handling state *****/
 
   // Connection established
-  if (isWifiConnected && !_wifiConnected)
+  if (isWifiConnected && _wifiState != WifiState::Connected)
   {
     onWiFiConnectionEstablished();
-    _connectingToWifi = false;
+    _wifiState = WifiState::Connected;
+    _checkWifis.clear();
+    WiFi.scanDelete();
 
     // At least 500 miliseconds of waiting before an mqtt connection attempt.
     // Some people have reported instabilities when trying to connect to 
@@ -210,9 +208,9 @@ bool EspMQTTClient::handleWiFi()
   }
 
   // Connection in progress
-  else if(_connectingToWifi)
+  else if(_wifiState == WifiState::Connecting)
   {
-      if(WiFi.status() == WL_CONNECT_FAILED || millis() - _lastWifiConnectiomAttemptMillis >= _wifiReconnectionAttemptDelay) 
+      if(WiFi.status() == WL_CONNECT_FAILED || millis() - _lastWifiConnectionAttemptMillis >= _wifiReconnectionAttemptDelay) 
       {
         if(_enableSerialLogs)
           Serial.printf("WiFi! Connection attempt failed, delay expired. (%fs). \n", millis()/1000.0);
@@ -221,22 +219,53 @@ bool EspMQTTClient::handleWiFi()
         MDNS.end();
 
         _nextWifiConnectionAttemptMillis = millis() + 500;
-        _connectingToWifi = false;
+        _wifiState = WifiState::Disconnected;
       }
   }
 
-  // Connection lost
-  else if (!isWifiConnected && _wifiConnected)
+  // searching for wifis done
+  else if (_wifiState == WifiState::Searching && WiFi.scanComplete() >= 0)
   {
+    const auto number = WiFi.scanComplete();
+    _wifiState = WifiState::Disconnected; // will be overritten if we have found a network
+    if (number > 0)
+    {
+      for (auto i = 0; i < number; ++i)
+      {
+        const auto name = WiFi.SSID(i);
+        for (const auto &wifi : _knownWifis)
+        {
+          if (strcmp(name.c_str(), wifi.wifiSsid) == 0)
+          {
+            for (int index = static_cast<int>(_checkWifis.size()) - 1; index >= 0; --index)
+            {
+              if (WiFi.RSSI(_checkWifis[index]) < WiFi.RSSI(i)) 
+              {
+                _checkWifis.insert(_checkWifis.begin() + index + 1, i);
+                goto end_insert_loop;
+              }
+            }
+            _checkWifis.insert(_checkWifis.begin(), i);
+            break;
+          }
+        }
+        end_insert_loop:;
+      }
+      connectToNextWifi();
+      _nextWifiSearchAttemptMillis = millis() + 500;
+    }
+  }
+
+  // Connection lost
+  else if (!isWifiConnected && _wifiState == WifiState::Connected) {
     onWiFiConnectionLost();
 
-    if(_handleWiFi)
+    if(weHandleWifi())
       _nextWifiConnectionAttemptMillis = millis() + 500;
   }
 
   // Connected since at least one loop() call
-  else if (isWifiConnected && _wifiConnected)
-  {
+  else if (isWifiConnected && _wifiState == WifiState::Connected) {
     // Web updater handling
     if (_httpServer != NULL)
     {
@@ -251,24 +280,26 @@ bool EspMQTTClient::handleWiFi()
   }
 
   // Disconnected since at least one loop() call
-  // Then, if we handle the wifi reconnection process and the waiting delay has expired, we connect to wifi
-  else if(_handleWiFi && _nextWifiConnectionAttemptMillis > 0 && millis() >= _nextWifiConnectionAttemptMillis)
-  {
+  // Then, if we handle the wifi reconnection process and the waiting delay has
+  // expired, we connect to wifi
+  else if (weHandleWifi() && _nextWifiConnectionAttemptMillis > 0 &&
+           millis() >= _nextWifiConnectionAttemptMillis) {
     connectToWifi();
-    _nextWifiConnectionAttemptMillis = 0;
-    _connectingToWifi = true;
-    _lastWifiConnectiomAttemptMillis = millis();
   }
 
   /**** Detect and return if there was a change in the WiFi state ****/
-
-  if (isWifiConnected != _wifiConnected)
+  if (isWifiConnected && _wifiState != WifiState::Connected)
   {
-    _wifiConnected = isWifiConnected;
+    _wifiState = WifiState::Connected;
+    return true;    
+  } 
+  if (!isWifiConnected && _wifiState == WifiState::Connected)
+  {
+    _wifiState = WifiState::Disconnected;
+    _nextWifiConnectionAttemptMillis = millis() + 500;
     return true;
   }
-  else
-    return false;
+  return false;
 }
 
 
@@ -383,7 +414,7 @@ void EspMQTTClient::onWiFiConnectionLost()
     Serial.printf("WiFi! Lost connection (%fs). \n", millis()/1000.0);
 
   // If we handle wifi, we force disconnection to clear the last connection
-  if (_handleWiFi)
+  if (weHandleWifi())
   {
     WiFi.disconnect(true);
     MDNS.end();
@@ -538,9 +569,15 @@ void EspMQTTClient::setKeepAlive(uint16_t keepAliveSeconds)
 
 void EspMQTTClient::setWifiCredentials(const char* wifiSsid, const char* wifiPassword)
 {
-  _wifiSsid = wifiSsid;
-  _wifiPassword = wifiPassword;
-  _handleWiFi = true;
+  _knownWifis.clear();
+  addWifiCredentials(wifiSsid, wifiPassword);
+}
+
+void EspMQTTClient::addWifiCredentials(const char* wifiSsid, const char* wifiPassword)
+{
+  if (wifiSsid) {
+    _knownWifis.push_back(WifiInformation{wifiSsid, wifiPassword});
+  }
 }
 
 void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCallback callback)
@@ -564,10 +601,55 @@ void EspMQTTClient::connectToWifi()
   #else
     WiFi.hostname(_mqttClientName);
   #endif
-  WiFi.begin(_wifiSsid, _wifiPassword);
+
+  WiFi.begin(_knownWifis.front().wifiSsid, _knownWifis.front().wifiPassword);
 
   if (_enableSerialLogs)
-    Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", _wifiSsid, millis()/1000.0);
+    Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", _knownWifis.front().wifiSsid, millis()/1000.0);
+
+  _nextWifiConnectionAttemptMillis = 0;
+  _wifiState = WifiState::Connecting;
+  _lastWifiConnectionAttemptMillis = millis();
+}
+
+// Start searching for Wifis (non-blocking)
+void EspMQTTClient::searchForWifi()
+{
+  WiFi.mode(WIFI_STA);
+  #ifdef ESP32
+    WiFi.setHostname(_mqttClientName);
+  #else
+    WiFi.hostname(_mqttClientName);
+  #endif
+  WiFi.scanNetworks(true /* async */, true /* show_hidden */);
+  if (_enableSerialLogs)
+    Serial.printf("\nWiFi: Searching for wifis ... (%fs) \n", millis()/1000.0);
+
+  _wifiState = WifiState::Searching;
+}
+
+// Start searching for Wifis (non-blocking)
+void EspMQTTClient::connectToNextWifi()
+{
+  if (_checkWifis.empty())
+    return;
+  const auto name = WiFi.SSID(_checkWifis.back());
+  _checkWifis.pop_back();
+  for (const auto & wifi : _knownWifis) {
+    if (strcmp(wifi.wifiSsid, name.c_str()) == 0) {
+      WiFi.begin(wifi.wifiSsid, wifi.wifiPassword);
+      break;
+    }
+  }
+  if (_enableSerialLogs)
+    Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", name.c_str(), millis()/1000.0);
+
+  _nextWifiConnectionAttemptMillis = 0;
+  _wifiState = WifiState::Connecting;
+  _lastWifiConnectionAttemptMillis = millis();
+
+  if (_checkWifis.empty())
+    WiFi.scanDelete();
 }
 
 // Try to connect to the MQTT broker and return True if the connection is successfull (blocking)

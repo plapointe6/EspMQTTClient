@@ -4,6 +4,7 @@
 #include <ArduinoOTA.h>
 #include <PubSubClient.h>
 #include <vector>
+#include <utility>
 
 #ifdef ESP8266
 
@@ -40,14 +41,18 @@ class EspMQTTClient
 {
 private:
   // Wifi related
-  bool _handleWiFi;
-  bool _wifiConnected;
-  bool _connectingToWifi;
-  unsigned long _lastWifiConnectiomAttemptMillis;
+  enum class WifiState {Disconnected, Connected, Connecting, Searching};
+  WifiState _wifiState = WifiState::Disconnected;
+  unsigned long _lastWifiConnectionAttemptMillis;
   unsigned long _nextWifiConnectionAttemptMillis;
   unsigned int _wifiReconnectionAttemptDelay;
-  const char* _wifiSsid;
-  const char* _wifiPassword;
+  unsigned long _nextWifiSearchAttemptMillis;
+  struct WifiInformation {
+    const char* wifiSsid;
+    const char* wifiPassword;
+  };
+  std::vector<WifiInformation> _knownWifis;
+  std::vector<uint8_t> _checkWifis; // queue of wifis (for WiFi.SSID(index)) to which we could connect. Front of queue is the back
   WiFiClient _wifiClient;
 
   // MQTT related
@@ -166,12 +171,13 @@ public:
 
   // Wifi related
   void setWifiCredentials(const char* wifiSsid, const char* wifiPassword);
+  void addWifiCredentials(const char* wifiSsid, const char* wifiPassword);
 
   // Other
   void executeDelayed(const unsigned long delay, DelayedExecutionCallback callback);
 
   inline bool isConnected() const { return isWifiConnected() && isMqttConnected(); }; // Return true if everything is connected
-  inline bool isWifiConnected() const { return _wifiConnected; }; // Return true if wifi is connected
+  inline bool isWifiConnected() const { return _wifiState == WifiState::Connected; }; // Return true if wifi is connected
   inline bool isMqttConnected() const { return _mqttConnected; }; // Return true if mqtt is connected
   inline unsigned int getConnectionEstablishedCount() const { return _connectionEstablishedCount; }; // Return the number of time onConnectionEstablished has been called since the beginning.
 
@@ -191,12 +197,15 @@ public:
 private:
   bool handleWiFi();
   bool handleMQTT();
+  bool weHandleWifi() const { return !_knownWifis.empty(); }
   void onWiFiConnectionEstablished();
   void onWiFiConnectionLost();
   void onMQTTConnectionEstablished();
   void onMQTTConnectionLost();
 
   void connectToWifi();
+  void searchForWifi();
+  void connectToNextWifi();
   bool connectToMqttBroker();
   void processDelayedExecutionRequests();
   bool mqttTopicMatch(const String &topic1, const String &topic2);
