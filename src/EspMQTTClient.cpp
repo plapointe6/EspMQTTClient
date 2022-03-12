@@ -692,6 +692,14 @@ bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2)
       if(topic2.substring(t1a.length(), topic2.length()-t1b.length()).indexOf('/') == -1)
         return true;
     }
+  }
+  else if ((i = topic1.indexOf('$')) >= 0)
+  {
+    // shared subscription for MQTTv5
+    if (topic1.startsWith("$share"))
+    {
+      return topic1.endsWith(topic2);
+    }
   } 
   else 
   {
