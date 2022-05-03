@@ -91,7 +91,8 @@ private:
 
   // General behaviour related
   ConnectionEstablishedCallback _connectionEstablishedCallback;
-  bool _enableSerialLogs;
+  bool _enableDebugLogs;
+  Stream *_debugStream;
   bool _drasticResetOnConnectionFailures;
   unsigned int _connectionEstablishedCount; // Incremented before each _connectionEstablishedCallback call
 
@@ -136,7 +137,7 @@ public:
   ~EspMQTTClient();
 
   // Optional functionality
-  void enableDebuggingMessages(const bool enabled = true); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
+  void enableDebuggingMessages(const bool enabled = true, Stream * const debugStream = &Serial); // Allow to display useful debugging messages. Can be set to false to disable them during program execution
   void enableHTTPWebUpdater(const char* username, const char* password, const char* address = "/"); // Activate the web updater, must be set before the first loop() call.
   void enableHTTPWebUpdater(const char* address = "/"); // Will set user and password equal to _mqttUsername and _mqttPassword
   void enableOTA(const char *password = NULL, const uint16_t port = 0); // Activate OTA updater, must be set before the first loop() call.
