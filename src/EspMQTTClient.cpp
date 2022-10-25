@@ -663,42 +663,57 @@ void EspMQTTClient::processDelayedExecutionRequests()
 }
 
 /**
- * Matching MQTT topics, handling the eventual presence of a single wildcard character
+ * Matching MQTT topics, handling the eventual presence of wildcards character
+ * It doesn't validate the correctness of the topic pattern.
  *
- * @param topic1 is the topic may contain a wildcard
+ * @param topic1 is the topic may contain wildcard(s)
  * @param topic2 must not contain wildcards
  * @return true on MQTT topic match, false otherwise
  */
-bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2) 
+bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2)
 {
-  int i = 0;
+  const char *topic1_p = topic1.begin();
+  const char *topic1_end = topic1.end();
+  const char *topic2_p = topic2.begin();
+  const char *topic2_end = topic2.end();
 
-  if((i = topic1.indexOf('#')) >= 0) 
-  {
-    String t1a = topic1.substring(0, i);
-    String t1b = topic1.substring(i+1);
-    if((t1a.length() == 0 || topic2.startsWith(t1a)) &&
-       (t1b.length() == 0 || topic2.endsWith(t1b)))
+  while (topic1_p < topic1_end && topic2_p < topic2_end) {
+    if (*topic1_p == '#'){
+      // we assume '#' can be present only at the end of the topic pattern
       return true;
-  } 
-  else if((i = topic1.indexOf('+')) >= 0) 
-  {
-    String t1a = topic1.substring(0, i);
-    String t1b = topic1.substring(i+1);
-
-    if((t1a.length() == 0 || topic2.startsWith(t1a))&&
-       (t1b.length() == 0 || topic2.endsWith(t1b))) 
-    {
-      if(topic2.substring(t1a.length(), topic2.length()-t1b.length()).indexOf('/') == -1)
-        return true;
     }
-  } 
-  else 
-  {
-    return topic1.equals(topic2);
+
+    if (*topic1_p == '+')
+    {
+      // move to the end of the matched section (till next '/' if any, otherwise the end of text)
+      const char *temp = strchr(topic2_p, '/');
+      if (temp)
+        topic2_p = temp;
+      else
+        topic2_p = topic2_end;
+
+      ++topic1_p;
+      continue;
+    }
+
+    // find the end of current section, it is either before next wildcard or at the end of text
+    const char* temp = strchr(topic1_p, '+');
+    int len = temp == NULL ? topic1_end - topic1_p : temp - topic1_p;
+    if (topic1_p[len - 1] == '#')
+      --len;
+
+    if (topic2_end - topic2_p < len)
+      return false;
+
+    if (strncmp(topic1_p, topic2_p, len))
+      return false;
+
+    topic1_p += len;
+    topic2_p += len;
   }
 
-  return false;
+  // Check if there is any remaining characters not matched
+  return !(topic1_p < topic1_end || topic2_p < topic2_end);
 }
 
 void EspMQTTClient::mqttMessageReceivedCallback(char* topic, uint8_t* payload, unsigned int length)

@@ -6,7 +6,7 @@ You just need to provide your credentials and it will manage the following thing
 - Connecting to a MQTT broker.
 - Automatically detecting connection lost either from the WiFi client or the MQTT broker and it will retry a connection automatically.
 - Subscribing/unsubscribing to/from MQTT topics by a friendly callback system.
-- Supports a single occurrence of a '+' or '#' wildcard in subscriptions
+- Supports wildcards in subscriptions
 - Provide a callback handling to advise once everything is connected (Wifi and MQTT).
 - Provide a function to enable printing of useful debug information related to MQTT and Wifi connections.
 - Provide some other useful utilities for MQTT and Wifi management.
