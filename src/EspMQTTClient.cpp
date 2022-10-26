@@ -666,7 +666,7 @@ void EspMQTTClient::processDelayedExecutionRequests()
  * Matching MQTT topics, handling the eventual presence of wildcards character
  * It doesn't validate the correctness of the topic pattern.
  *
- * @param topic1 is the topic may contain wildcard(s)
+ * @param topic1 may contain wildcards (+, #)
  * @param topic2 must not contain wildcards
  * @return true on MQTT topic match, false otherwise
  */
@@ -677,8 +677,10 @@ bool EspMQTTClient::mqttTopicMatch(const String &topic1, const String &topic2)
   const char *topic2_p = topic2.begin();
   const char *topic2_end = topic2.end();
 
-  while (topic1_p < topic1_end && topic2_p < topic2_end) {
-    if (*topic1_p == '#'){
+  while (topic1_p < topic1_end && topic2_p < topic2_end)
+  {
+    if (*topic1_p == '#')
+    {
       // we assume '#' can be present only at the end of the topic pattern
       return true;
     }
