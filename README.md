@@ -63,7 +63,7 @@ For Wifi and MQTT connection handling (Recommended):
     const char* mqttUsername,  // Omit this parameter to disable MQTT authentification
     const char* mqttPassword,  // Omit this parameter to disable MQTT authentification
     const char* mqttClientName = "ESP8266",
-    const short mqttServerPort = 1883);
+    const uint16_t mqttServerPort = 1883);
 ```
 
 MQTT connection handling only:
