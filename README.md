@@ -70,7 +70,7 @@ MQTT connection handling only:
 ```c++
   EspMQTTClient(
     const char* mqttServerIp,
-    const short mqttServerPort,  // It is mandatory here to allow these constructors to be distinct from those with the Wifi handling parameters
+    const uint16_t mqttServerPort,  // It is mandatory here to allow these constructors to be distinct from those with the Wifi handling parameters
     const char* mqttUsername,    // Omit this parameter to disable MQTT authentification
     const char* mqttPassword,    // Omit this parameter to disable MQTT authentification
     const char* mqttClientName = "ESP8266");
@@ -150,7 +150,7 @@ Some useful getters
 ```c++
 const char* getMqttClientName();
 const char* getMqttServerIp();
-const short getMqttServerPort();
+const uint16_t getMqttServerPort();
 ```
 
 ### Connection established callback
