@@ -5,7 +5,7 @@
 
 // default constructor
 EspMQTTClient::EspMQTTClient(
-  const short mqttServerPort,
+  const uint16_t mqttServerPort,
   const char* mqttClientName) :
   EspMQTTClient(nullptr, mqttServerPort, mqttClientName)
 {
@@ -14,7 +14,7 @@ EspMQTTClient::EspMQTTClient(
 // MQTT only (no wifi connection attempt)
 EspMQTTClient::EspMQTTClient(
   const char* mqttServerIp,
-  const short mqttServerPort,
+  const uint16_t mqttServerPort,
   const char* mqttClientName) :
   EspMQTTClient(NULL, NULL, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
 {
@@ -22,7 +22,7 @@ EspMQTTClient::EspMQTTClient(
 
 EspMQTTClient::EspMQTTClient(
   const char* mqttServerIp,
-  const short mqttServerPort,
+  const uint16_t mqttServerPort,
   const char* mqttUsername,
   const char* mqttPassword,
   const char* mqttClientName) :
@@ -36,7 +36,7 @@ EspMQTTClient::EspMQTTClient(
   const char* wifiPassword,
   const char* mqttServerIp,
   const char* mqttClientName,
-  const short mqttServerPort) :
+  const uint16_t mqttServerPort) :
   EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
 {
 }
@@ -48,7 +48,7 @@ EspMQTTClient::EspMQTTClient(
   const char* mqttUsername,
   const char* mqttPassword,
   const char* mqttClientName,
-  const short mqttServerPort) :
+  const uint16_t mqttServerPort) :
   _wifiSsid(wifiSsid),
   _wifiPassword(wifiPassword),
   _mqttServerIp(mqttServerIp),
