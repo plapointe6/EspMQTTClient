@@ -161,7 +161,6 @@ void EspMQTTClient::enableLastWillMessage(const char* topic, const char* message
 
 void EspMQTTClient::loop()
 {
-  // WIFI handling
   bool wifiStateChanged = handleWiFi();
 
   // If there is a change in the wifi connection state, don't handle the mqtt connection state right away.
@@ -174,7 +173,6 @@ void EspMQTTClient::loop()
   if(mqttStateChanged)
     return;
 
-  // Procewss the delayed execution commands
   processDelayedExecutionRequests();
 }
 
@@ -297,7 +295,7 @@ bool EspMQTTClient::handleMQTT()
     _nextMqttConnectionAttemptMillis = millis() + _mqttReconnectionAttemptDelay;
   }
 
-  // It's time to  connect to the MQTT broker
+  // It's time to connect to the MQTT broker
   else if (isWifiConnected() && _nextMqttConnectionAttemptMillis > 0 && millis() >= _nextMqttConnectionAttemptMillis)
   {
     // Connect to MQTT broker
