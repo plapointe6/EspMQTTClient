@@ -63,7 +63,7 @@ EspMQTTClient::EspMQTTClient(
   _wifiConnected = false;
   _connectingToWifi = false;
   _nextWifiConnectionAttemptMillis = 500;
-  _lastWifiConnectiomAttemptMillis = 0;
+  _lastWifiConnectionAttemptMillis = 0;
   _wifiReconnectionAttemptDelay = 60 * 1000;
 
   // MQTT client
@@ -84,7 +84,7 @@ EspMQTTClient::EspMQTTClient(
   _enableOTA = false;
 
   // other
-  _enableSerialLogs = false;
+  _enableDebugMessages = false;
   _drasticResetOnConnectionFailures = false;
   _connectionEstablishedCallback = onConnectionEstablished;
   _connectionEstablishedCount = 0;
@@ -103,7 +103,7 @@ EspMQTTClient::~EspMQTTClient()
 
 void EspMQTTClient::enableDebuggingMessages(const bool enabled)
 {
-  _enableSerialLogs = enabled;
+  _enableDebugMessages = enabled;
 }
 
 void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* password, const char* address)
@@ -111,12 +111,12 @@ void EspMQTTClient::enableHTTPWebUpdater(const char* username, const char* passw
   if (_httpServer == NULL)
   {
     _httpServer = new WebServer(80);
-    _httpUpdater = new ESPHTTPUpdateServer(_enableSerialLogs);
+    _httpUpdater = new ESPHTTPUpdateServer(_enableDebugMessages);
     _updateServerUsername = (char*)username;
     _updateServerPassword = (char*)password;
     _updateServerAddress = (char*)address;
   }
-  else if (_enableSerialLogs)
+  else if (_enableDebugMessages)
     Serial.print("SYS! You can't call enableHTTPWebUpdater() more than once !\n");
 }
 
@@ -175,7 +175,7 @@ void EspMQTTClient::loop()
     return;
 
   // Procewss the delayed execution commands
-  processDelayedExecutionRequests(); 
+  processDelayedExecutionRequests();
 }
 
 bool EspMQTTClient::handleWiFi()
@@ -203,7 +203,7 @@ bool EspMQTTClient::handleWiFi()
     _connectingToWifi = false;
 
     // At least 500 miliseconds of waiting before an mqtt connection attempt.
-    // Some people have reported instabilities when trying to connect to 
+    // Some people have reported instabilities when trying to connect to
     // the mqtt broker right after being connected to wifi.
     // This delay prevent these instabilities.
     _nextMqttConnectionAttemptMillis = millis() + 500;
@@ -212,11 +212,11 @@ bool EspMQTTClient::handleWiFi()
   // Connection in progress
   else if(_connectingToWifi)
   {
-      if(WiFi.status() == WL_CONNECT_FAILED || millis() - _lastWifiConnectiomAttemptMillis >= _wifiReconnectionAttemptDelay) 
+      if(WiFi.status() == WL_CONNECT_FAILED || millis() - _lastWifiConnectionAttemptMillis >= _wifiReconnectionAttemptDelay)
       {
-        if(_enableSerialLogs)
+        if(_enableDebugMessages)
           Serial.printf("WiFi! Connection attempt failed, delay expired. (%fs). \n", millis()/1000.0);
-        
+
         WiFi.disconnect(true);
         MDNS.end();
 
@@ -257,7 +257,7 @@ bool EspMQTTClient::handleWiFi()
     connectToWifi();
     _nextWifiConnectionAttemptMillis = 0;
     _connectingToWifi = true;
-    _lastWifiConnectiomAttemptMillis = millis();
+    _lastWifiConnectionAttemptMillis = millis();
   }
 
   /**** Detect and return if there was a change in the WiFi state ****/
@@ -279,7 +279,7 @@ bool EspMQTTClient::handleMQTT()
 
   // Get the current connextion status
   bool isMqttConnected = (isWifiConnected() && _mqttClient.connected());
-  
+
 
   /***** Detect and handle the current MQTT handling state *****/
 
@@ -313,13 +313,13 @@ bool EspMQTTClient::handleMQTT()
       _mqttClient.disconnect();
       _failedMQTTConnectionAttemptCount++;
 
-      if (_enableSerialLogs)
+      if (_enableDebugMessages)
         Serial.printf("MQTT!: Failed MQTT connection count: %i \n", _failedMQTTConnectionAttemptCount);
 
       // When there is too many failed attempt, sometimes it help to reset the WiFi connection or to restart the board.
       if(_handleWiFi && _failedMQTTConnectionAttemptCount == 8)
       {
-        if (_enableSerialLogs)
+        if (_enableDebugMessages)
           Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting WiFi ...");
 
         WiFi.disconnect(true);
@@ -331,7 +331,7 @@ bool EspMQTTClient::handleMQTT()
       }
       else if(_drasticResetOnConnectionFailures && _failedMQTTConnectionAttemptCount == 12) // Will reset after 12 failed attempt (3 minutes of retry)
       {
-        if (_enableSerialLogs)
+        if (_enableDebugMessages)
           Serial.println("MQTT!: Can't connect to broker after too many attempt, resetting board ...");
 
         #ifdef ESP8266
@@ -358,7 +358,7 @@ bool EspMQTTClient::handleMQTT()
 
 void EspMQTTClient::onWiFiConnectionEstablished()
 {
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
       Serial.printf("WiFi: Connected (%fs), ip : %s \n", millis()/1000.0, WiFi.localIP().toString().c_str());
 
     // Config of web updater
@@ -369,7 +369,7 @@ void EspMQTTClient::onWiFiConnectionEstablished()
       _httpServer->begin();
       MDNS.addService("http", "tcp", 80);
 
-      if (_enableSerialLogs)
+      if (_enableDebugMessages)
         Serial.printf("WEB: Updater ready, open http://%s.local in your browser and login with username '%s' and password '%s'.\n", _mqttClientName, _updateServerUsername, _updateServerPassword);
     }
 
@@ -379,7 +379,7 @@ void EspMQTTClient::onWiFiConnectionEstablished()
 
 void EspMQTTClient::onWiFiConnectionLost()
 {
-  if (_enableSerialLogs)
+  if (_enableDebugMessages)
     Serial.printf("WiFi! Lost connection (%fs). \n", millis()/1000.0);
 
   // If we handle wifi, we force disconnection to clear the last connection
@@ -398,7 +398,7 @@ void EspMQTTClient::onMQTTConnectionEstablished()
 
 void EspMQTTClient::onMQTTConnectionLost()
 {
-  if (_enableSerialLogs)
+  if (_enableDebugMessages)
   {
     Serial.printf("MQTT! Lost connection (%fs). \n", millis()/1000.0);
     Serial.printf("MQTT: Retrying to connect in %i seconds. \n", _mqttReconnectionAttemptDelay / 1000);
@@ -414,7 +414,7 @@ bool EspMQTTClient::setMaxPacketSize(const uint16_t size)
 
   bool success = _mqttClient.setBufferSize(size);
 
-  if(!success && _enableSerialLogs)
+  if(!success && _enableDebugMessages)
     Serial.println("MQTT! failed to set the max packet size.");
 
   return success;
@@ -425,7 +425,7 @@ bool EspMQTTClient::publish(const char* topic, const uint8_t* payload, unsigned 
   // Do not try to publish if MQTT is not connected.
   if(!isConnected())
   {
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
       Serial.println("MQTT! Trying to publish when disconnected, skipping.");
 
     return false;
@@ -433,7 +433,7 @@ bool EspMQTTClient::publish(const char* topic, const uint8_t* payload, unsigned 
 
   bool success = _mqttClient.publish(topic, payload, plength, retain);
 
-  if (_enableSerialLogs) 
+  if (_enableDebugMessages)
   {
     if(success)
       Serial.printf("MQTT << [%s] %s\n", topic, payload);
@@ -455,7 +455,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
   // Do not try to subscribe if MQTT is not connected.
   if(!isConnected())
   {
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
       Serial.println("MQTT! Trying to subscribe when disconnected, skipping.");
 
     return false;
@@ -473,8 +473,8 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
     if(!found)
       _topicSubscriptionList.push_back({ topic, messageReceivedCallback, NULL });
   }
-  
-  if (_enableSerialLogs)
+
+  if (_enableDebugMessages)
   {
     if(success)
       Serial.printf("MQTT: Subscribed to [%s]\n", topic.c_str());
@@ -500,7 +500,7 @@ bool EspMQTTClient::unsubscribe(const String &topic)
   // Do not try to unsubscribe if MQTT is not connected.
   if(!isConnected())
   {
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
       Serial.println("MQTT! Trying to unsubscribe when disconnected, skipping.");
 
     return false;
@@ -515,12 +515,12 @@ bool EspMQTTClient::unsubscribe(const String &topic)
         _topicSubscriptionList.erase(_topicSubscriptionList.begin() + i);
         i--;
 
-        if(_enableSerialLogs)
+        if(_enableDebugMessages)
           Serial.printf("MQTT: Unsubscribed from %s\n", topic.c_str());
       }
       else
       {
-        if(_enableSerialLogs)
+        if(_enableDebugMessages)
           Serial.println("MQTT! unsubscribe failed");
 
         return false;
@@ -566,7 +566,7 @@ void EspMQTTClient::connectToWifi()
   #endif
   WiFi.begin(_wifiSsid, _wifiPassword);
 
-  if (_enableSerialLogs)
+  if (_enableDebugMessages)
     Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", _wifiSsid, millis()/1000.0);
 }
 
@@ -577,7 +577,7 @@ bool EspMQTTClient::connectToMqttBroker()
 
   if (_mqttServerIp != nullptr && strlen(_mqttServerIp) > 0)
   {
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
     {
       if (_mqttUsername)
         Serial.printf("MQTT: Connecting to broker \"%s\" with client name \"%s\" and username \"%s\" ... (%fs)", _mqttServerIp, _mqttClientName, _mqttUsername, millis()/1000.0);
@@ -591,14 +591,14 @@ bool EspMQTTClient::connectToMqttBroker()
   }
   else
   {
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
       Serial.printf("MQTT: Broker server ip is not set, not connecting (%fs)\n", millis()/1000.0);
     success = false;
   }
 
-  if (_enableSerialLogs)
+  if (_enableDebugMessages)
   {
-    if (success) 
+    if (success)
       Serial.printf(" - ok. (%fs) \n", millis()/1000.0);
     else
     {
@@ -642,7 +642,7 @@ bool EspMQTTClient::connectToMqttBroker()
   return success;
 }
 
-// Delayed execution handling. 
+// Delayed execution handling.
 // Check if there is delayed execution requests to process and execute them if needed.
 void EspMQTTClient::processDelayedExecutionRequests()
 {
@@ -728,7 +728,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, uint8_t* payload, u
   {
     strTerminationPos = length - 1;
 
-    if (_enableSerialLogs)
+    if (_enableDebugMessages)
       Serial.print("MQTT! Your message may be truncated, please set setMaxPacketSize() to a higher value.\n");
   }
   else
@@ -740,7 +740,7 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, uint8_t* payload, u
   String topicStr(topic);
 
   // Logging
-  if (_enableSerialLogs)
+  if (_enableDebugMessages)
     Serial.printf("MQTT >> [%s] %s\n", topic, payloadStr.c_str());
 
   // Send the message to subscribers
