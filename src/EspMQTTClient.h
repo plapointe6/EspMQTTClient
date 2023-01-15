@@ -43,7 +43,7 @@ private:
   bool _handleWiFi;
   bool _wifiConnected;
   bool _connectingToWifi;
-  unsigned long _lastWifiConnectiomAttemptMillis;
+  unsigned long _lastWifiConnectionAttemptMillis;
   unsigned long _nextWifiConnectionAttemptMillis;
   unsigned int _wifiReconnectionAttemptDelay;
   const char* _wifiSsid;
@@ -91,7 +91,7 @@ private:
 
   // General behaviour related
   ConnectionEstablishedCallback _connectionEstablishedCallback;
-  bool _enableSerialLogs;
+  bool _enableDebugMessages;
   bool _drasticResetOnConnectionFailures;
   unsigned int _connectionEstablishedCount; // Incremented before each _connectionEstablishedCallback call
 
