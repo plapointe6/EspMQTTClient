@@ -16,31 +16,34 @@ EspMQTTClient::EspMQTTClient(
   const char* mqttServerIp,
   const uint16_t mqttServerPort,
   const char* mqttClientName) :
-  EspMQTTClient(NULL, NULL, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
+  EspMQTTClient(NULL, NULL, mqttServerIp, NULL, NULL, NULL, NULL, NULL, mqttClientName, mqttServerPort, false)
 {
 }
 
+/// Wifi + MQTT with no MQTT authentification
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid,
+  const char* wifiPassword,
+  const char* mqttServerIp,
+  const char* mqttClientName,
+  const uint16_t mqttServerPort) :
+  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, NULL, NULL, NULL, NULL, NULL, mqttClientName, mqttServerPort, false)
+
+{
+}
+
+/// Only MQTT handling (no wifi), with MQTT authentification
 EspMQTTClient::EspMQTTClient(
   const char* mqttServerIp,
   const uint16_t mqttServerPort,
   const char* mqttUsername,
   const char* mqttPassword,
   const char* mqttClientName) :
-  EspMQTTClient(NULL, NULL, mqttServerIp, mqttUsername, mqttPassword, mqttClientName, mqttServerPort)
+  EspMQTTClient(NULL, NULL, mqttServerIp, mqttUsername, mqttPassword, NULL, NULL, NULL, mqttClientName, mqttServerPort, false)
 {
 }
 
-// Wifi and MQTT handling
-EspMQTTClient::EspMQTTClient(
-  const char* wifiSsid,
-  const char* wifiPassword,
-  const char* mqttServerIp,
-  const char* mqttClientName,
-  const uint16_t mqttServerPort) :
-  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
-{
-}
-
+/// Wifi + MQTT(S) (SSL unsecure) with MQTT authentification 
 EspMQTTClient::EspMQTTClient(
   const char* wifiSsid,
   const char* wifiPassword,
@@ -48,15 +51,51 @@ EspMQTTClient::EspMQTTClient(
   const char* mqttUsername,
   const char* mqttPassword,
   const char* mqttClientName,
-  const uint16_t mqttServerPort) :
+  const uint16_t mqttServerPort,
+  bool mqttSecure) :
+  EspMQTTClient(NULL, NULL, mqttServerIp, mqttUsername, mqttPassword, NULL, NULL, NULL, mqttClientName, mqttServerPort, mqttSecure)
+{
+}
+
+/// Wifi + MQTT(S) (SSL with CA certificate) with MQTT authentification 
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid,
+  const char* wifiPassword,
+  const char* mqttServerIp,
+  const char* mqttUsername,
+  const char* mqttPassword,
+  const char* mqttRootCA,
+  const char* mqttClientName,
+  const uint16_t mqttServerPort,
+  bool mqttSecure) :
+  EspMQTTClient(NULL, NULL, mqttServerIp, mqttUsername, mqttPassword, mqttRootCA, NULL, NULL, mqttClientName, mqttServerPort, mqttSecure)
+{
+}
+
+/// Wifi + MQTT(S) (with client certificate) with MQTT authentification 
+EspMQTTClient::EspMQTTClient(
+  const char* wifiSsid,
+  const char* wifiPassword,
+  const char* mqttServerIp,
+  const char* mqttUsername,
+  const char* mqttPassword,
+  const char* mqttRootCA,
+  const char* mqttClientCertificate,
+  const char* mqttClientKey,
+  const char* mqttClientName,
+  const uint16_t mqttServerPort,
+  bool mqttSecure) :
   _wifiSsid(wifiSsid),
   _wifiPassword(wifiPassword),
   _mqttServerIp(mqttServerIp),
   _mqttUsername(mqttUsername),
   _mqttPassword(mqttPassword),
+  _mqttRootCA(mqttRootCA),
+  _mqttClientCertificate(mqttClientCertificate),
+  _mqttClientKey(mqttClientKey),
   _mqttClientName(mqttClientName),
   _mqttServerPort(mqttServerPort),
-  _mqttClient(mqttServerIp, mqttServerPort, _wifiClient)
+  _mqttSecure(mqttSecure)
 {
   // WiFi connection
   _handleWiFi = (wifiSsid != NULL);
@@ -67,6 +106,34 @@ EspMQTTClient::EspMQTTClient(
   _wifiReconnectionAttemptDelay = 60 * 1000;
 
   // MQTT client
+  if(!_mqttSecure)
+  // MQTT unsecure
+  {
+    _mqttClient.setServer(_mqttServerIp, _mqttServerPort);
+    _mqttClient.setClient(_wifiClient);
+  }
+  else
+  // MQTT with SSL
+  {
+    if(_mqttRootCA != NULL)
+    {
+      _wifiClientSecure.setCACert(_mqttRootCA); // Set CA certificate to validate MQTT server 
+
+      if(_mqttClientCertificate != NULL && _mqttClientKey != NULL)
+      {
+        _wifiClientSecure.setCertificate(_mqttClientCertificate); // Set MQTT client SSL certificate
+        _wifiClientSecure.setPrivateKey(_mqttClientKey);          // Set MQTT client SSL key
+      }
+    }
+    else
+    {
+      _wifiClientSecure.setInsecure(); // Don't check CA certificate just use the SSL channel
+    }
+    _mqttClient.setServer(_mqttServerIp, _mqttServerPort);
+    _mqttClient.setClient(_wifiClientSecure);
+  }
+  
+
   _mqttConnected = false;
   _nextMqttConnectionAttemptMillis = 0;
   _mqttReconnectionAttemptDelay = 15 * 1000; // 15 seconds of waiting between each mqtt reconnection attempts by default

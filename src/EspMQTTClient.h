@@ -8,6 +8,7 @@
 #ifdef ESP8266
 
   #include <ESP8266WiFi.h>
+  #include <WiFiClientSecure.h> 
   #include <ESP8266WebServer.h>
   #include <ESP8266mDNS.h>
   #include <ESP8266HTTPUpdateServer.h>
@@ -19,7 +20,9 @@
 
 #else // for ESP32
 
+
   #include <WiFiClient.h>
+  #include <WiFiClientSecure.h> 
   #include <WebServer.h>
   #include <ESPmDNS.h>
   #include "ESP32HTTPUpdateServer.h"
@@ -48,7 +51,9 @@ private:
   unsigned int _wifiReconnectionAttemptDelay;
   const char* _wifiSsid;
   const char* _wifiPassword;
+
   WiFiClient _wifiClient;
+  WiFiClientSecure _wifiClientSecure;
 
   // MQTT related
   bool _mqttConnected;
@@ -57,8 +62,12 @@ private:
   const char* _mqttServerIp;
   const char* _mqttUsername;
   const char* _mqttPassword;
+  const char* _mqttRootCA;
+  const char* _mqttClientCertificate;
+  const char *_mqttClientKey;
   const char* _mqttClientName;
   uint16_t _mqttServerPort;
+  bool _mqttSecure;
   bool _mqttCleanSession;
   char* _mqttLastWillTopic;
   char* _mqttLastWillMessage;
@@ -109,16 +118,6 @@ public:
     const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME,
     const uint16_t mqttServerPort = 1883);
 
-  /// Wifi + MQTT with MQTT authentification
-  EspMQTTClient(
-    const char* wifiSsid,
-    const char* wifiPassword,
-    const char* mqttServerIp,
-    const char* mqttUsername,
-    const char* mqttPassword,
-    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME,
-    const uint16_t mqttServerPort = 1883);
-
   /// Only MQTT handling (no wifi), with MQTT authentification
   EspMQTTClient(
     const char* mqttServerIp,
@@ -132,6 +131,43 @@ public:
     const char* mqttServerIp,
     const uint16_t mqttServerPort,
     const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME);
+
+  /// Wifi + MQTT(S) (SSL unsecure) with MQTT authentification
+  EspMQTTClient(
+    const char *wifiSsid,
+    const char *wifiPassword,
+    const char *mqttServerIp,
+    const char *mqttUsername,
+    const char *mqttPassword,
+    const char *mqttClientName,
+    const uint16_t mqttServerPort,
+    bool mqttSecure = false);
+
+  /// Wifi + MQTT(S) (SSL with CA certificate) with MQTT authentification
+  EspMQTTClient(
+    const char* wifiSsid,
+    const char* wifiPassword,
+    const char* mqttServerIp,
+    const char* mqttUsername,
+    const char* mqttPassword,
+    const char* mqttRootCA,
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME,
+    const uint16_t mqttServerPort = 1883,
+    bool mqttSecure = false);
+
+  /// Wifi + MQTT(S) (with client certificate) with MQTT authentification 
+  EspMQTTClient(
+    const char* wifiSsid,
+    const char* wifiPassword,
+    const char* mqttServerIp,
+    const char* mqttUsername,
+    const char* mqttPassword,
+    const char* mqttRootCA,
+    const char* mqttClientCertificate,
+    const char* mqttClientKey,
+    const char* mqttClientName = DEFAULT_MQTT_CLIENT_NAME,
+    const uint16_t mqttServerPort = 1883,
+    bool mqttSecure = false);
 
   ~EspMQTTClient();
 
