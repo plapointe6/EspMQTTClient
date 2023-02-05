@@ -33,16 +33,18 @@ EspMQTTClient::EspMQTTClient(
 // Wifi and MQTT handling
 EspMQTTClient::EspMQTTClient(
   const char* wifiSsid,
+  const char* wifiBssid,
   const char* wifiPassword,
   const char* mqttServerIp,
   const char* mqttClientName,
   const uint16_t mqttServerPort) :
-  EspMQTTClient(wifiSsid, wifiPassword, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
+  EspMQTTClient(wifiSsid, wifiPassword, wifiBssid, mqttServerIp, NULL, NULL, mqttClientName, mqttServerPort)
 {
 }
 
 EspMQTTClient::EspMQTTClient(
   const char* wifiSsid,
+  const char* wifiBssid,
   const char* wifiPassword,
   const char* mqttServerIp,
   const char* mqttUsername,
@@ -50,6 +52,7 @@ EspMQTTClient::EspMQTTClient(
   const char* mqttClientName,
   const uint16_t mqttServerPort) :
   _wifiSsid(wifiSsid),
+  _wifiBssid(wifiBssid),
   _wifiPassword(wifiPassword),
   _mqttServerIp(mqttServerIp),
   _mqttUsername(mqttUsername),
@@ -534,10 +537,11 @@ void EspMQTTClient::setKeepAlive(uint16_t keepAliveSeconds)
   _mqttClient.setKeepAlive(keepAliveSeconds);
 }
 
-void EspMQTTClient::setWifiCredentials(const char* wifiSsid, const char* wifiPassword)
+void EspMQTTClient::setWifiCredentials(const char* wifiSsid, const char* wifiPassword, const char* wifiBssid)
 {
   _wifiSsid = wifiSsid;
   _wifiPassword = wifiPassword;
+  _wifiBssid = wifiBssid;
   _handleWiFi = true;
 }
 
@@ -562,7 +566,7 @@ void EspMQTTClient::connectToWifi()
   #else
     WiFi.hostname(_mqttClientName);
   #endif
-  WiFi.begin(_wifiSsid, _wifiPassword);
+  WiFi.begin(_wifiSsid, _wifiPassword, _wifiBssid);
 
   if (_enableDebugMessages)
     Serial.printf("\nWiFi: Connecting to %s ... (%fs) \n", _wifiSsid, millis()/1000.0);
