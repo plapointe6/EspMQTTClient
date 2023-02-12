@@ -188,11 +188,11 @@ bool EspMQTTClient::handleWiFi()
     return true;
   }
 
-  // Get the current connextion status
+  // Get the current connection status
   bool isWifiConnected = (WiFi.status() == WL_CONNECTED);
 
 
-  /***** Detect ans handle the current WiFi handling state *****/
+  /***** Detect and handle the current WiFi handling state *****/
 
   // Connection established
   if (isWifiConnected && !_wifiConnected)
