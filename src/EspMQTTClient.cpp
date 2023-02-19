@@ -469,7 +469,7 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallback messa
       found = _topicSubscriptionList[i].topic.equals(topic);
 
     if(!found)
-      _topicSubscriptionList.push_back({ topic, messageReceivedCallback, NULL });
+      _topicSubscriptionList.push_back({ topic, messageReceivedCallback, NULL, NULL });
   }
 
   if (_enableDebugMessages)
@@ -488,6 +488,16 @@ bool EspMQTTClient::subscribe(const String &topic, MessageReceivedCallbackWithTo
   if(subscribe(topic, (MessageReceivedCallback)NULL, qos))
   {
     _topicSubscriptionList[_topicSubscriptionList.size()-1].callbackWithTopic = messageReceivedCallback;
+    return true;
+  }
+  return false;
+}
+
+bool EspMQTTClient::subscribe(const String &topic, EspMQTTCaller *caller, uint8_t qos)
+{
+  if(subscribe(topic, (MessageReceivedCallback)NULL, qos))
+  {
+    _topicSubscriptionList[_topicSubscriptionList.size()-1].caller = caller;
     return true;
   }
   return false;
