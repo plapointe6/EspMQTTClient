@@ -760,6 +760,8 @@ void EspMQTTClient::mqttMessageReceivedCallback(char* topic, uint8_t* payload, u
         _topicSubscriptionList[i].callback(payloadStr); // Call the callback
       if(_topicSubscriptionList[i].callbackWithTopic != NULL)
         _topicSubscriptionList[i].callbackWithTopic(topicStr, payloadStr); // Call the callback
+      if(_topicSubscriptionList[i].caller != NULL)
+        _topicSubscriptionList[i].caller->cMessageReceivedCallback(topicStr, payloadStr); // Call the callback
     }
   }
 }
