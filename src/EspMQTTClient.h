@@ -29,6 +29,17 @@
 
 #endif
 
+class EspMQTTClient; // forward declaration
+
+// Caller interface to inherit and call back object methods
+
+class EspMQTTCaller
+{
+public:
+  virtual void cVoidCallback(){};
+  virtual void cMessageReceivedCallback(const String &topicStr, const String &message){};
+};
+
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
 typedef std::function<void()> ConnectionEstablishedCallback;
@@ -71,6 +82,8 @@ private:
     String topic;
     MessageReceivedCallback callback;
     MessageReceivedCallbackWithTopic callbackWithTopic;
+    EspMQTTCaller *caller;
+
   };
   std::vector<TopicSubscriptionRecord> _topicSubscriptionList;
 
@@ -154,6 +167,7 @@ public:
   bool publish(const String &topic, const String &payload, bool retain = false);
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback, uint8_t qos = 0);
   bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback, uint8_t qos = 0);
+  bool subscribe(const String &topic, EspMQTTCaller *caller , uint8_t qos = 0);
   bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
   void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
   inline void setMqttClientName(const char* name) { _mqttClientName = name; }; // Allow to set client name manually (must be done in setup(), else it will not work.)
