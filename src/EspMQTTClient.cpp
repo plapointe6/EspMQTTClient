@@ -550,6 +550,11 @@ void EspMQTTClient::executeDelayed(const unsigned long delay, DelayedExecutionCa
   _delayedExecutionList.push_back(delayedExecutionRecord);
 }
 
+void EspMQTTClient::setStream(Stream& stream)
+{
+  _mqttClient.setStream(stream);
+}
+
 
 // ================== Private functions ====================-
 
