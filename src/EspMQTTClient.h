@@ -154,7 +154,8 @@ public:
   bool publish(const String &topic, const String &payload, bool retain = false);
   bool subscribe(const String &topic, MessageReceivedCallback messageReceivedCallback, uint8_t qos = 0);
   bool subscribe(const String &topic, MessageReceivedCallbackWithTopic messageReceivedCallback, uint8_t qos = 0);
-  bool unsubscribe(const String &topic);   //Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+  bool unsubscribe(const String &topic); // Unsubscribes from the topic, if it exists, and removes it from the CallbackList.
+  void setStream(Stream& stream);
   void setKeepAlive(uint16_t keepAliveSeconds); // Change the keepalive interval (15 seconds by default)
   inline void setMqttClientName(const char* name) { _mqttClientName = name; }; // Allow to set client name manually (must be done in setup(), else it will not work.)
   inline void setMqttServer(const char* server, const char* username = "", const char* password = "", const uint16_t port = 1883) { // Allow setting the MQTT info manually (must be done in setup())
