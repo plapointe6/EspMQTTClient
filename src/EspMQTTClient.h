@@ -29,6 +29,10 @@
 
 #endif
 
+// remove macro when compiling to remove all calls to Serial.print[ln]?
+// and reduce binary size
+#define ENABLE_DEBUG_MESSAGES
+
 void onConnectionEstablished(); // MUST be implemented in your sketch. Called once everythings is connected (Wifi, mqtt).
 
 typedef std::function<void()> ConnectionEstablishedCallback;
